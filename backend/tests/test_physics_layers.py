@@ -7,7 +7,7 @@ class TestPhysicalLayers(unittest.TestCase):
     def setUp(self):
         self.engine = PhysicalLayerEngine()
 
-    def test_c3_cross_rate_consistent(self):
+    def test_l1_doppler_range_consistent(self):
         c_over_f0 = 299792458.0 / 1575.42e6
         rho_rates = [-200.0, 150.0]
         # In consistent conditions, Doppler = -rho_dot / (c/f0)
@@ -21,11 +21,11 @@ class TestPhysicalLayers(unittest.TestCase):
             doppler=dopplers
         )
         evidence = self.engine.evaluate(obs)
-        c3_check = next(e for e in evidence if "C3" in e.name)
-        self.assertEqual(c3_check.status, CheckStatus.PASS)
-        self.assertLess(c3_check.value, 0.5)
+        l1_check = next(e for e in evidence if "L1" in e.name)
+        self.assertEqual(l1_check.status, CheckStatus.PASS)
+        self.assertLess(l1_check.value, 0.5)
 
-    def test_c3_cross_rate_inconsistent(self):
+    def test_l1_doppler_range_inconsistent(self):
         # Desynchronized Doppler and pseudorange rates
         obs = GNSSObservation(
             timestamp="12:00:00",
@@ -35,9 +35,9 @@ class TestPhysicalLayers(unittest.TestCase):
             doppler=[1000.0, -900.0]  # Severe mismatch!
         )
         evidence = self.engine.evaluate(obs)
-        c3_check = next(e for e in evidence if "C3" in e.name)
-        self.assertEqual(c3_check.status, CheckStatus.FAIL)
-        self.assertGreater(c3_check.value, 5.0)
+        l1_check = next(e for e in evidence if "L1" in e.name)
+        self.assertEqual(l1_check.status, CheckStatus.FAIL)
+        self.assertGreater(l1_check.value, 5.0)
 
     def test_physical_layers_unavailable_when_raw_missing(self):
         # Standard PVT without raw measurements
@@ -48,13 +48,13 @@ class TestPhysicalLayers(unittest.TestCase):
             altitude=215.0
         )
         evidence = self.engine.evaluate(obs)
-        c3_check = next(e for e in evidence if "C3" in e.name)
+        l1_check = next(e for e in evidence if "L1" in e.name)
         l2_check = next(e for e in evidence if "L2" in e.name)
         l4_check = next(e for e in evidence if "L4" in e.name)
 
-        self.assertEqual(c3_check.status, CheckStatus.UNAVAILABLE)
-        self.assertFalse(c3_check.is_available)
-        self.assertIn("DATA NOT AVAILABLE", c3_check.explanation)
+        self.assertEqual(l1_check.status, CheckStatus.UNAVAILABLE)
+        self.assertFalse(l1_check.is_available)
+        self.assertIn("DATA NOT AVAILABLE", l1_check.explanation)
 
         self.assertEqual(l2_check.status, CheckStatus.UNAVAILABLE)
         self.assertEqual(l4_check.status, CheckStatus.UNAVAILABLE)

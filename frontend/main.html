@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./assets/vendor/leaflet/leaflet.css">
+<script src="./assets/vendor/leaflet/leaflet.js"></script>
+<script src="./threeui.bundle.js?v=8" defer></script>
+<link rel="stylesheet" href="./src/shaders/threeui.css">
+</head>
+<body>
+<div id="nebulaMount" class="mission-nebula" aria-hidden="true"></div>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:"Instrument Sans";src:url("assets/fonts/instrument-sans-latin.woff2") format("woff2");font-display:swap;font-weight:400 700}
+@font-face{font-family:"Inter";src:url("assets/fonts/inter-latin.woff2") format("woff2");font-display:swap;font-weight:100 900}
+@font-face{font-family:"IBM Plex Mono";src:url("assets/fonts/ibm-plex-mono-400-latin.woff2") format("woff2");font-display:swap;font-weight:400}
+@font-face{font-family:"IBM Plex Mono";src:url("assets/fonts/ibm-plex-mono-500-latin.woff2") format("woff2");font-display:swap;font-weight:500}
+body{margin:0;background:#030609;-webkit-font-smoothing:antialiased}
+a{color:#96c0fb}
+a:hover{color:#73aaf8}
+input[type=range]{-webkit-appearance:none;background:transparent}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:rgba(32,55,67,.14);border-radius:3px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#5795f5;border:2px solid #73aaf8;margin-top:-4.5px}
+.mission-nebula{position:fixed;inset:0;z-index:1;overflow:hidden;background:transparent;pointer-events:none;opacity:.38;mix-blend-mode:screen;filter:hue-rotate(-24deg) saturate(.72) brightness(.72)}
+.mission-nebula::after{position:absolute;inset:0;content:"";background:radial-gradient(ellipse at 62% 40%,transparent 18%,rgba(3,6,9,.2) 62%,rgba(3,6,9,.72) 100%);pointer-events:none}
+.mission-nebula .shader-frame,.mission-nebula .threeui-background,.mission-nebula iframe{width:100%;height:100%;display:block}
+#missionControlShell{position:relative;background:#030609!important}
+#missionControlShell>aside,#missionControlShell>div{position:relative;z-index:2}
+@media (prefers-reduced-motion:reduce){.mission-nebula{opacity:.28}}
+.astra-map-shell{position:relative;overflow:hidden;border-radius:8px;background:#060d13;isolation:isolate}
+#astraTrajectoryMap{position:absolute;z-index:1;inset:0;width:100%;height:100%;background:#060d13}
+.leaflet-container{font-family:'Inter',ui-sans-serif,sans-serif;background:#060d13}
+.leaflet-tile-pane{filter:saturate(.75) brightness(.65) hue-rotate(178deg) contrast(1.08)}
+.leaflet-overlay-pane{mix-blend-mode:screen}
+.leaflet-control-attribution{max-width:170px!important;padding:2px 5px!important;background:rgba(3,6,9,.72)!important;color:#71858f!important;font:6px/1.25 'IBM Plex Mono',monospace!important}
+.leaflet-control-attribution a{color:#96c0fb!important}
+.leaflet-bar{border:1px solid rgba(32,55,67,.24)!important;box-shadow:none!important}
+.leaflet-bar a{width:24px!important;height:24px!important;line-height:23px!important;border:0!important;border-bottom:1px solid rgba(32,55,67,.16)!important;background:rgba(11,20,27,.9)!important;color:#b7c6cd!important}
+.leaflet-tooltip{border:1px solid rgba(32,55,67,.24)!important;border-radius:6px!important;background:#0b141b!important;color:#b7c6cd!important;box-shadow:none!important;font:8px/1.4 'IBM Plex Mono',monospace!important}
+.leaflet-tooltip::before{border-top-color:#0b141b!important}
+.astra-vehicle-marker{background:none!important;border:0!important}
+.astra-vehicle-marker>span{position:relative;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--vehicle-color);background:rgba(11,20,27,.7)}
+.astra-vehicle-marker>span::before{content:"";position:absolute;inset:6px;border:1px solid var(--vehicle-color);opacity:.5;border-radius:50%;animation:astraPulse 1.6s ease-out infinite}
+.astra-vehicle-marker i{width:5px;height:5px;border-radius:50%;background:var(--vehicle-color);box-shadow:0 0 10px var(--vehicle-color)}
+@keyframes astraPulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+.astra-map-toolbar{position:absolute;z-index:5;left:8px;top:8px;display:flex;gap:5px}
+.astra-map-readout{position:absolute;z-index:5;right:8px;top:8px;padding:5px 8px;border-radius:6px;border:1px solid rgba(32,55,67,.24);background:rgba(3,6,9,.72);backdrop-filter:blur(6px);color:#b7c6cd;font:7px/1.5 'IBM Plex Mono',monospace;text-align:right}
+.astra-map-shell.is-offline::after{content:"MAP TILES UNAVAILABLE";position:absolute;inset:auto 8px 8px auto;padding:3px 7px;border-radius:4px;background:rgba(229,106,114,.16);border:1px solid rgba(229,106,114,.4);color:#e56a72;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;z-index:6}
+@media (prefers-reduced-motion:reduce){.astra-vehicle-marker>span::before{animation:none}}
+</style>
+</helmet>
+
+<div id="missionControlShell" style="font-family:'Inter',ui-sans-serif,sans-serif;background:#030609;height:100vh;color:#dbe5e9;display:grid;grid-template-columns:210px minmax(0,1fr)">
+
+  <aside style="border-right:1px solid rgba(32,55,67,.12);background:#030609;display:flex;flex-direction:column;height:100vh;overflow-y:auto">
+    <div style="height:62px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid rgba(32,55,67,.12)">
+      <img src="assets/brand/astra-logo-navigation.png" alt="ASTRA" style="height:22px;width:auto;object-fit:contain" />
+      <small style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.14em">MISSION CONTROL</small>
+    </div>
+
+    <div style="padding:16px 18px;border-bottom:1px solid rgba(32,55,67,.12);display:flex;flex-direction:column;gap:3px">
+      <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">WORKSPACE</span>
+      <strong style="font-size:11px;font-weight:500">Navigation integrity</strong>
+      <small style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">LEO / RECEIVER 01</small>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;gap:2px;padding:10px">
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+        <button onClick="{{ item.onClick }}" style="{{ item.style }}">
+          <span style="{{ item.dotStyle }}"></span>
+          <span>{{ item.label }}</span>
+          <sc-if value="{{ item.badge }}" hint-placeholder-val="{{ false }}">
+            <span style="margin-left:auto;padding:1px 5px;border-radius:8px;background:#e56a72;color:#030609;font:8px/1.3 'IBM Plex Mono',monospace;font-weight:600">{{ item.badge }}</span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </nav>
+
+    <div style="margin-top:auto;padding:14px 16px;border-top:1px solid rgba(32,55,67,.12);display:flex;align-items:center;gap:8px">
+      <span style="width:6px;height:6px;border-radius:50%;background:{{ connectionColor }};box-shadow:0 0 12px {{ connectionColor }}"></span>
+      <strong style="color:#b7c6cd;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">{{ connectionLabel }}</strong>
+    </div>
+  </aside>
+
+  <div style="min-width:0;display:flex;flex-direction:column">
+    <header style="height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid rgba(32,55,67,.12);background:#030609;flex:none">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em">ASTRA / TRUST LAYER</span>
+        <i style="width:14px;height:1px;background:rgba(32,55,67,.24)"></i>
+        <strong style="color:#b7c6cd;font-size:11px;font-weight:500">{{ pageTitle }}</strong>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="padding:5px 9px;border:1px solid rgba(32,55,67,.16);border-radius:30px;background:rgba(32,55,67,.04);color:#b7c6cd;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">{{ sourceLabel }}</span>
+        <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">UTC {{ utcLabel }}</span>
+        <div style="display:flex;border:1px solid rgba(32,55,67,.14);border-radius:20px;padding:2px">
+          <button onClick="{{ onSetOperatorMode }}" style="{{ operatorModeStyle }}">Operator</button>
+          <button onClick="{{ onSetForensicMode }}" style="{{ forensicModeStyle }}">Forensic</button>
+        </div>
+        <div style="position:relative">
+          <button onClick="{{ onToggleHelp }}" style="height:28px;padding:0 12px;border-radius:6px;border:1px solid rgba(32,55,67,.14);background:transparent;color:#b7c6cd;font-size:10px;cursor:pointer">Help ↓</button>
+          <sc-if value="{{ helpOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:34px;right:0;width:160px;border:1px solid rgba(32,55,67,.16);border-radius:8px;background:#0b141b;padding:6px;display:flex;flex-direction:column;gap:2px;z-index:20">
+              <button onClick="{{ onOpenGuide }}" style="height:30px;border:none;background:transparent;color:#b7c6cd;font-size:10px;text-align:left;padding:0 8px;border-radius:5px;cursor:pointer;font-family:inherit">Demo guide</button>
+              <button onClick="{{ onOpenMethod }}" style="height:30px;border:none;background:transparent;color:#b7c6cd;font-size:10px;text-align:left;padding:0 8px;border-radius:5px;cursor:pointer;font-family:inherit">Method</button>
+            </div>
+          </sc-if>
+        </div>
+        <button onClick="{{ onOpenImport }}" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:6px;border:none;background:linear-gradient(90deg,#1f3f73,#5795f5);color:#030609;font-size:10px;font-weight:600;cursor:pointer">Import telemetry</button>
+      </div>
+    </header>
+
+    <main style="flex:1;min-width:0;padding:18px 26px 20px;overflow:auto">
+
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:20px">
+            <div>
+              <p style="margin:0 0 6px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Navigation integrity / live decision</p>
+              <h1 style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:24px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Can this position <span style="color:#b7c6cd">be trusted?</span></h1>
+            </div>
+            <span style="color:#71858f;font:9px/1.4 'IBM Plex Mono',monospace;text-align:right">PIPELINE<br><strong style="color:#b7c6cd">GATEWAY → PHYSICS → FUSION</strong></span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.3fr .7fr;gap:12px">
+            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:16px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <span style="width:8px;height:8px;border-radius:50%;background:{{ curColor }};box-shadow:0 0 12px {{ curColor }}"></span>
+                <strong style="font-size:12px;letter-spacing:.04em">{{ curState }}</strong>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+                <strong style="font-family:'Instrument Sans',sans-serif;font-size:32px;font-weight:500">{{ curScore }}</strong><span style="color:#71858f;font-size:14px">/100</span>
+              </div>
+              <p style="margin:0 0 10px;color:#b7c6cd;font-size:12px;line-height:1.4">{{ curReason }}</p>
+              <button onClick="{{ onOpenWhy }}" style="height:24px;padding:0 12px;margin-bottom:10px;border-radius:6px;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;font-size:10px;cursor:pointer;font-family:inherit">Why this decision ›</button>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+                <div class="astra-map-shell" style="width:100%;height:110px">
+                  <div id="astraTrajectoryMap" data-dc-stable="astraTrajectoryMap"></div>
+                  <div class="astra-map-toolbar">
+                    <sc-for list="{{ mapStyleOptions }}" as="ms" hint-placeholder-count="2">
+                      <button onClick="{{ ms.onClick }}" style="{{ ms.style }}">{{ ms.label }}</button>
+                    </sc-for>
+                  </div>
+                  <div class="astra-map-readout">
+                    <span>EPOCH {{ epochLabel }}</span>
+                    <strong style="display:block;margin-top:2px"><span>{{ curLat }}</span> / <span>{{ curLon }}</span></strong>
+                  </div>
+                </div>
+                <svg viewBox="0 0 600 160" style="width:100%;height:110px;display:block" preserveAspectRatio="none">
+                  <line x1="0" y1="32" x2="600" y2="32" stroke="rgba(32,55,67,.08)"></line>
+                  <line x1="0" y1="80" x2="600" y2="80" stroke="rgba(32,55,67,.08)"></line>
+                  <line x1="0" y1="128" x2="600" y2="128" stroke="rgba(32,55,67,.08)"></line>
+                  <path d="{{ timelineArea }}" fill="rgba(87,149,245,.28)"></path>
+                  <path d="{{ timelinePath }}" fill="none" stroke="#5795f5" stroke-width="2"></path>
+                  <circle cx="{{ timelineMarkerX }}" cy="{{ timelineMarkerY }}" r="5" fill="#dbe5e9" stroke="{{ curColor }}" stroke-width="2"></circle>
+                </svg>
+              </div>
+              <input type="range" min="0" max="{{ maxIndex }}" value="{{ currentIndex }}" onChange="{{ onScrub }}" style="width:100%;margin-top:4px" />
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">EPOCH {{ epochLabel }}</span>
+                <div style="display:flex;gap:6px">
+                  <button onClick="{{ onReset }}" style="width:26px;height:26px;border-radius:6px;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;cursor:pointer;font-size:11px">⟲</button>
+                  <button onClick="{{ onTogglePlay }}" style="height:26px;padding:0 14px;border-radius:6px;border:none;background:linear-gradient(90deg,#1f3f73,#5795f5);color:#030609;cursor:pointer;font-size:10px;font-weight:600">{{ playLabel }}</button>
+                  <button onClick="{{ onNext }}" style="width:26px;height:26px;border-radius:6px;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;cursor:pointer;font-size:11px">⏭</button>
+                  <div style="display:flex;gap:4px;margin-left:6px;border-left:1px solid rgba(32,55,67,.14);padding-left:8px">
+                    <sc-for list="{{ speedOptions }}" as="sp" hint-placeholder-count="3">
+                      <button onClick="{{ sp.onClick }}" style="{{ sp.style }}">{{ sp.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:16px;display:flex;flex-direction:column;gap:10px">
+              <div>
+                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">RECOMMENDED ACTION</span>
+                <p style="margin:6px 0 0;font-size:13px;font-weight:500">{{ curAction }}</p>
+              </div>
+              <div style="border-top:1px solid rgba(32,55,67,.12);padding-top:10px">
+                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">DECISION CONFIDENCE</span>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+                  <i style="flex:1;height:5px;border-radius:6px;background:rgba(32,55,67,.1);overflow:hidden;display:block"><b style="display:block;height:100%;width:{{ curConfidence }}%;background:#5795f5"></b></i>
+                  <strong style="font:11px/1 'IBM Plex Mono',monospace">{{ curConfidence }}%</strong>
+                </div>
+              </div>
+              <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid rgba(32,55,67,.12);padding-top:10px">
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">LATITUDE</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curLat }}</dd></div>
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">LONGITUDE</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curLon }}</dd></div>
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">ALTITUDE MSL</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curAltitude }}</dd></div>
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">HEADING COG</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curHeading }}</dd></div>
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">SATELLITES</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curSatellites }}</dd></div>
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">HDOP</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curHdop }}</dd></div>
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">GROUND SPEED</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curSpeed }}</dd></div>
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">FIX QUALITY</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curFix }}</dd></div>
+              </dl>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.55fr .95fr;gap:12px">
+            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
+              <header style="display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(32,55,67,.12)"><strong style="color:#b7c6cd;font-size:10px">LIVE NAVIGATION MONITOR</strong><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">LAST 20 EPOCHS</span></header>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:10px 18px">
+                <div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">TRUST SCORE</span><strong style="font:10px/1 'IBM Plex Mono',monospace">{{ curScore }}</strong></div>
+                  <svg viewBox="0 0 160 48" style="width:100%;height:30px;display:block" preserveAspectRatio="none"><path d="{{ sparkTrust }}" fill="none" stroke="{{ curColor }}" stroke-width="1.5"></path></svg>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">GROUND SPEED</span><strong style="font:10px/1 'IBM Plex Mono',monospace">{{ curSpeed }}</strong></div>
+                  <svg viewBox="0 0 160 48" style="width:100%;height:30px;display:block" preserveAspectRatio="none"><path d="{{ sparkSpeed }}" fill="none" stroke="#78d3dc" stroke-width="1.5"></path></svg>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">HDOP</span><strong style="font:10px/1 'IBM Plex Mono',monospace">{{ curHdop }}</strong></div>
+                  <svg viewBox="0 0 160 48" style="width:100%;height:30px;display:block" preserveAspectRatio="none"><path d="{{ sparkHdop }}" fill="none" stroke="#d8a45c" stroke-width="1.5"></path></svg>
+                </div>
+              </div>
+            </div>
+            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
+              <header style="display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(32,55,67,.12)">
+                <strong style="color:#b7c6cd;font-size:10px">EVIDENCE SNAPSHOT</strong>
+                <button onClick="{{ onGoEvidence }}" style="border:none;background:transparent;color:#96c0fb;font-size:9px;cursor:pointer;font-family:inherit">Inspect all ↗</button>
+              </header>
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ evidenceSnapshot }}" as="ev" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:center;gap:10px;padding:6px 18px;border-bottom:1px solid rgba(32,55,67,.08)">
+                    <span style="width:6px;height:6px;border-radius:50%;background:{{ ev.color }}"></span>
+                    <span style="flex:1;font-size:10px;color:#b7c6cd">{{ ev.name }}</span>
+                    <span style="color:{{ ev.color }};font:8px/1 'IBM Plex Mono',monospace">{{ ev.status }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isScenario }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <p style="margin:0 0 10px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Threat simulation / deterministic replay</p>
+          <h1 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Test the system.<br><span style="color:#b7c6cd">Break the signal.</span></h1>
+          <p style="margin:0 0 6px;color:#b7c6cd;font-size:12px;max-width:560px;line-height:1.6">Run reproducible navigation conditions through the ASTRA evidence pipeline and inspect every state transition.</p>
+          <div style="display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:start">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ scenarioList }}" as="s" hint-placeholder-count="6">
+                <button onClick="{{ s.onClick }}" style="{{ s.style }}">
+                  <span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">{{ s.num }}</span>
+                  <strong style="font-size:11px;font-weight:500">{{ s.name }}</strong>
+                </button>
+              </sc-for>
+            </div>
+            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:26px">
+              <div style="color:#71858f;font:24px/1 'IBM Plex Mono',monospace;margin-bottom:8px">{{ selScenarioNum }}</div>
+              <span style="padding:4px 9px;border-radius:20px;background:rgba(229,106,114,.1);border:1px solid rgba(229,106,114,.3);color:#e56a72;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">{{ selScenarioCategory }}</span>
+              <h2 style="margin:14px 0 8px;font-family:'Instrument Sans',sans-serif;font-size:20px;font-weight:500">{{ selScenarioName }}</h2>
+              <p style="margin:0 0 18px;color:#b7c6cd;font-size:12px;line-height:1.6">{{ selScenarioDescription }}</p>
+              <dl style="margin:0 0 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;border-top:1px solid rgba(32,55,67,.12);padding-top:14px">
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">EXPECTED DECISION</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ selScenarioExpected }}</dd></div>
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">OBSERVATION COUNT</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">25 epochs</dd></div>
+              </dl>
+              <div style="margin-bottom:18px;padding-top:14px;border-top:1px solid rgba(32,55,67,.12)">
+                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">WHAT THIS PROVES</span>
+                <p style="margin:8px 0 0;color:#dbe5e9;font-size:12px">{{ selScenarioTakeaway }}</p>
+              </div>
+              <button onClick="{{ onRunScenario }}" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 18px;border-radius:2px;border:none;background:linear-gradient(90deg,#1f3f73,#5795f5);color:#030609;font-size:11px;font-weight:600;cursor:pointer">Run scenario ↗</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isEvidence }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <p style="margin:0 0 10px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Explainable decision / current epoch</p>
+          <h1 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Evidence before<br><span style="color:#b7c6cd">confidence.</span></h1>
+          <p style="margin:0 0 6px;color:#b7c6cd;font-size:12px;max-width:560px;line-height:1.6">Every check declares its source, threshold, availability and effect on the fused trust decision. Currently inspecting epoch {{ epochLabel }} of {{ scenarioName }}.</p>
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ evidenceFilters }}" as="f" hint-placeholder-count="4">
+              <button onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</button>
+            </sc-for>
+          </div>
+          <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr .6fr .8fr;padding:12px 18px;border-bottom:1px solid rgba(32,55,67,.12);color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">
+              <span>EVIDENCE CHECK</span><span>LAYER</span><span>OBSERVED</span><span>THRESHOLD</span><span>WEIGHT</span><span>STATUS</span>
+            </div>
+            <sc-for list="{{ evidenceRows }}" as="row" hint-placeholder-count="7">
+              <div>
+                <button onClick="{{ row.onClick }}" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr .6fr .8fr;padding:13px 18px;border-bottom:1px solid rgba(32,55,67,.08);align-items:center;font-size:11px;width:100%;text-align:left;border-left:none;border-right:none;border-top:none;background:transparent;cursor:pointer;font-family:inherit">
+                  <strong style="font-weight:500;color:#dbe5e9">{{ row.name }}</strong>
+                  <span style="color:#b7c6cd;font:10px/1 'IBM Plex Mono',monospace">{{ row.layer }}</span>
+                  <span style="color:#b7c6cd;font:10px/1 'IBM Plex Mono',monospace">{{ row.value }}</span>
+                  <span style="color:#71858f;font:10px/1 'IBM Plex Mono',monospace">{{ row.threshold }}</span>
+                  <span style="color:#71858f;font:10px/1 'IBM Plex Mono',monospace">{{ row.weight }}</span>
+                  <span style="color:{{ row.color }};font:9px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">{{ row.status }}</span>
+                </button>
+                <sc-if value="{{ row.expanded }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:14px 18px;background:rgba(32,55,67,.03);border-bottom:1px solid rgba(32,55,67,.08);color:#b7c6cd;font-size:11px;line-height:1.6">{{ row.explanation }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isIncident }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 240px;align-items:end;gap:28px">
+            <div>
+              <p style="margin:0 0 10px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Continuous surveillance / live incidents</p>
+              <h1 style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:32px;font-weight:500;line-height:.98;letter-spacing:-.03em">Every anomaly logged.<br><span style="color:#b7c6cd">Nothing missed.</span></h1>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding:12px 0 3px;border-top:1px solid rgba(32,55,67,.12)">
+              <span style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">MONITORING</span>
+              <strong style="color:#5795f5;font:9px/1.4 'IBM Plex Mono',monospace">{{ incidentFeedSummary }}</strong>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
+            <div style="padding:16px 18px;border-right:1px solid rgba(32,55,67,.12)"><span style="display:block;color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">OPEN</span><strong style="display:block;margin-top:10px;font-family:'Instrument Sans',sans-serif;font-size:22px;color:#e56a72">{{ incidentOpenCount }}</strong></div>
+            <div style="padding:16px 18px;border-right:1px solid rgba(32,55,67,.12)"><span style="display:block;color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">ACKNOWLEDGED</span><strong style="display:block;margin-top:10px;font-family:'Instrument Sans',sans-serif;font-size:22px;color:#d8a45c">{{ incidentAckCount }}</strong></div>
+            <div style="padding:16px 18px;border-right:1px solid rgba(32,55,67,.12)"><span style="display:block;color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">QUARANTINED</span><strong style="display:block;margin-top:10px;font-family:'Instrument Sans',sans-serif;font-size:22px;color:#e56a72">{{ incidentCriticalCount }}</strong></div>
+            <div style="padding:16px 18px"><span style="display:block;color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">SUSPICIOUS</span><strong style="display:block;margin-top:10px;font-family:'Instrument Sans',sans-serif;font-size:22px;color:#d8a45c">{{ incidentWarningCount }}</strong></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.55fr .95fr;gap:16px;align-items:start">
+            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
+              <header style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(32,55,67,.12)">
+                <strong style="color:#b7c6cd;font-size:10px;font-weight:500">INCIDENT FEED</strong>
+              </header>
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ incidents }}" as="inc" hint-placeholder-count="4">
+                  <button onClick="{{ inc.onClick }}" style="position:relative;display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;align-items:center;gap:14px;padding:16px 18px;border:none;border-bottom:1px solid rgba(32,55,67,.12);width:100%;text-align:left;cursor:pointer;font-family:inherit;background:{{ inc.bg }}">
+                    <span style="width:6px;height:6px;border-radius:50%;background:{{ inc.dotColor }};box-shadow:0 0 10px {{ inc.dotColor }}"></span>
+                    <div style="min-width:0;display:flex;flex-direction:column;gap:4px">
+                      <strong style="color:#dbe5e9;font-size:11px;font-weight:500">{{ inc.title }}</strong>
+                      <span style="color:#71858f;font:8px/1.4 'IBM Plex Mono',monospace">{{ inc.subtitle }}</span>
+                    </div>
+                    <span style="color:#b7c6cd;font:9px/1 'IBM Plex Mono',monospace;text-align:right">{{ inc.scoreChange }}</span>
+                    <span style="padding:5px 9px;border:1px solid {{ inc.borderColor }};border-radius:20px;background:{{ inc.pillBg }};color:{{ inc.dotColor }};font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">{{ inc.status }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="position:relative;padding:22px 22px 24px;border:1px solid rgba(87,149,245,.5);border-radius:2px;background:radial-gradient(circle at 80% 0,rgba(87,149,245,.16),transparent 45%),#0b141b">
+              <i style="position:absolute;top:-1px;left:-1px;width:11px;height:11px;border-top:1.5px solid #5795f5;border-left:1.5px solid #5795f5"></i>
+              <i style="position:absolute;top:-1px;right:-1px;width:11px;height:11px;border-top:1.5px solid #5795f5;border-right:1.5px solid #5795f5"></i>
+              <i style="position:absolute;bottom:-1px;left:-1px;width:11px;height:11px;border-bottom:1.5px solid #5795f5;border-left:1.5px solid #5795f5"></i>
+              <i style="position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-bottom:1.5px solid #5795f5;border-right:1.5px solid #5795f5"></i>
+              <span style="color:#e56a72;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em">{{ selIncidentTag }}</span>
+              <h2 style="margin:14px 0 6px;font-family:'Instrument Sans',sans-serif;font-size:19px;font-weight:500;letter-spacing:-.02em;line-height:1.2">{{ selIncidentTitle }}</h2>
+              <p style="margin:0 0 20px;color:#b7c6cd;font-size:11px;line-height:1.55">{{ selIncidentDetail }}</p>
+
+              <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(32,55,67,.12)">
+                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(32,55,67,.12)"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.08em">STREAM</span><span style="color:#b7c6cd;font:9px/1 'IBM Plex Mono',monospace">{{ selIncidentStream }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(32,55,67,.12)"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.08em">EPOCH</span><span style="color:#b7c6cd;font:9px/1 'IBM Plex Mono',monospace">{{ selIncidentEpoch }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(32,55,67,.12)"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.08em">EVIDENCE LAYER</span><span style="color:#b7c6cd;font:9px/1 'IBM Plex Mono',monospace">{{ selIncidentLayer }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(32,55,67,.12)"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.08em">CHAIN HASH</span><span style="color:#b7c6cd;font:9px/1 'IBM Plex Mono',monospace">{{ selIncidentHash }}</span></div>
+              </div>
+
+              <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(32,55,67,.12)">
+                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">RECOMMENDED ACTION</span>
+                <p style="margin:10px 0 0;color:#dbe5e9;font-size:12px;font-weight:500">{{ selIncidentAction }}</p>
+              </div>
+
+              <div style="display:flex;gap:8px;margin-top:22px">
+                <button onClick="{{ onAcknowledge }}" style="flex:1;height:34px;display:flex;align-items:center;justify-content:center;border:none;border-radius:2px;background:{{ ackButtonBg }};color:#030609;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit">{{ ackButtonLabel }}</button>
+                <button onClick="{{ onViewIncidentEvidence }}" style="flex:1;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(32,55,67,.24);border-radius:2px;background:transparent;color:#b7c6cd;font-size:10px;cursor:pointer;font-family:inherit">View evidence</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isForensics }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <p style="margin:0 0 10px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Cryptographic memory / event chain</p>
+          <h1 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Every decision.<br><span style="color:#b7c6cd">Impossible to rewrite quietly.</span></h1>
+          <p style="margin:0 0 6px;color:#b7c6cd;font-size:12px;max-width:560px;line-height:1.6">Each operational decision is chained to the previous event, exposing modification anywhere in the record.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:24px;display:flex;align-items:center;gap:18px">
+              <span style="width:44px;height:44px;border-radius:50%;border:2px solid #5795f5;box-shadow:0 0 16px rgba(87,149,245,.5);flex:none"></span>
+              <div>
+                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">CHAIN STATUS</span>
+                <h2 style="margin:6px 0 4px;font-family:'Instrument Sans',sans-serif;font-size:18px;font-weight:500;color:#5795f5">CHAIN VALID</h2>
+                <span style="color:#71858f;font-size:11px">Every event hash resolves.</span>
+              </div>
+            </div>
+            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:24px">
+              <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">DATASET SHA-256</span>
+              <code style="display:block;margin:8px 0 16px;color:#b7c6cd;font-size:11px;word-break:break-all">SIMULATED_DATASET_VERIFIED</code>
+              <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid rgba(32,55,67,.12);padding-top:14px">
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">EVENTS CHAINED</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ eventCount }}</dd></div>
+                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">LAST SEQUENCE</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ lastSequence }}</dd></div>
+              </dl>
+            </div>
+          </div>
+          <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
+            <header style="padding:14px 18px;border-bottom:1px solid rgba(32,55,67,.12)"><strong style="color:#b7c6cd;font-size:10px">FORENSIC EVENTS — APPEND-ONLY AUDIT TRAIL / SELECT A BLOCK TO INSPECT</strong></header>
+            <sc-for list="{{ ledgerRows }}" as="ev" hint-placeholder-count="8">
+              <div>
+                <button onClick="{{ ev.onClick }}" style="display:grid;grid-template-columns:40px 1fr auto auto;align-items:center;gap:14px;padding:13px 18px;border:none;border-bottom:1px solid rgba(32,55,67,.08);font-size:11px;width:100%;text-align:left;cursor:pointer;font-family:inherit;background:transparent">
+                  <span style="color:#71858f;font:10px/1 'IBM Plex Mono',monospace">{{ ev.seq }}</span>
+                  <code style="color:#b7c6cd;font:10px/1 'IBM Plex Mono',monospace">{{ ev.hash }}</code>
+                  <strong style="color:{{ ev.color }};font-size:10px">{{ ev.state }}</strong>
+                  <span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">{{ ev.time }}</span>
+                </button>
+                <sc-if value="{{ ev.expanded }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:16px 18px;background:rgba(32,55,67,.03);border-bottom:1px solid rgba(32,55,67,.08);display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px">
+                    <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">PRIMARY REASON</span><p style="margin:4px 0 0;color:#b7c6cd">{{ ev.reason }}</p></div>
+                    <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">RECOMMENDED ACTION</span><p style="margin:4px 0 0;color:#b7c6cd">{{ ev.action }}</p></div>
+                    <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">PREVIOUS HASH</span><code style="display:block;margin:4px 0 0;color:#b7c6cd;word-break:break-all">{{ ev.prevHash }}</code></div>
+                    <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">CURRENT HASH</span><code style="display:block;margin:4px 0 0;color:#b7c6cd;word-break:break-all">{{ ev.hash }}</code></div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isEvaluation }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <p style="margin:0 0 10px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Benchmark proof / unseen trajectories</p>
+          <h1 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Measured against<br><span style="color:#b7c6cd">what came before.</span></h1>
+          <p style="margin:0 0 6px;color:#b7c6cd;font-size:12px;max-width:560px;line-height:1.6">Scenario-separated testing compares basic rules, ML-only detection and ASTRA's hybrid physical evidence system.</p>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+            <sc-for list="{{ models }}" as="m" hint-placeholder-count="3">
+              <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:22px">
+                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">{{ m.tag }}</span>
+                <h3 style="margin:8px 0 14px;font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:500">{{ m.name }}</h3>
+                <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:16px"><strong style="font-family:'Instrument Sans',sans-serif;font-size:30px;font-weight:500;color:{{ m.color }}">{{ m.f1 }}</strong><span style="color:#71858f;font-size:10px">F1 SCORE</span></div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;justify-content:space-between;font-size:10px;color:#b7c6cd"><span>Accuracy</span><span>{{ m.acc }}</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:10px;color:#b7c6cd"><span>Precision</span><span>{{ m.prec }}</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:10px;color:#b7c6cd"><span>Recall</span><span>{{ m.rec }}</span></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:24px;display:flex;align-items:center;justify-content:space-between;gap:20px">
+            <div>
+              <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">KEY FINDING</span>
+              <h2 style="margin:8px 0 6px;font-family:'Instrument Sans',sans-serif;font-size:18px;font-weight:500">Bad GNSS ≠ spoofing.</h2>
+              <span style="color:#b7c6cd;font-size:12px">ASTRA preserves degraded but genuine navigation without escalating it as an attack.</span>
+            </div>
+            <div style="text-align:right;flex:none">
+              <strong style="display:block;font-family:'Instrument Sans',sans-serif;font-size:28px;font-weight:500;color:#5795f5">0.0%</strong>
+              <span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">FALSE POSITIVE RATE</span>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </main>
+
+    <sc-if value="{{ showFeedDock }}" hint-placeholder-val="{{ true }}">
+      <footer style="flex:none;display:flex;align-items:center;gap:16px;padding:0 24px;height:56px;border-top:1px solid rgba(32,55,67,.12);background:#030609">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">ACTIVE FEED</span>
+          <strong style="font-size:11px">{{ scenarioName }}</strong>
+        </div>
+        <select value="{{ scenarioSelectValue }}" onChange="{{ onSelectDockScenario }}" style="height:30px;background:#0b141b;border:1px solid rgba(32,55,67,.16);border-radius:6px;color:#b7c6cd;font-size:10px;padding:0 8px;font-family:inherit">
+          <sc-for list="{{ scenarioOptions }}" as="opt" hint-placeholder-count="6">
+            <option value="{{ opt.id }}">{{ opt.name }}</option>
+          </sc-for>
+        </select>
+        <button onClick="{{ onReset }}" style="height:30px;padding:0 12px;border-radius:6px;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;font-size:10px;cursor:pointer">Reset</button>
+        <button onClick="{{ onTogglePlay }}" style="height:30px;padding:0 14px;border-radius:6px;border:none;background:linear-gradient(90deg,#1f3f73,#5795f5);color:#030609;font-size:10px;font-weight:600;cursor:pointer">{{ playLabel }}</button>
+        <button onClick="{{ onNext }}" style="height:30px;padding:0 12px;border-radius:6px;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;font-size:10px;cursor:pointer">Next epoch</button>
+        <div style="flex:1;display:flex;align-items:center;gap:10px">
+          <i style="flex:1;height:4px;border-radius:4px;background:rgba(32,55,67,.1);display:block;overflow:hidden"><b style="display:block;height:100%;width:{{ dockProgress }}%;background:#5795f5"></b></i>
+          <span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">{{ epochLabel }}</span>
+        </div>
+      </footer>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseDialog }}" style="position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:50">
+      <div onClick="{{ stopPropagation }}" style="width:420px;max-width:90vw;border:1px solid rgba(32,55,67,.16);border-radius:12px;background:#0b141b;padding:26px;position:relative">
+        <button onClick="{{ onCloseDialog }}" style="position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;cursor:pointer;font-size:11px">×</button>
+
+        <sc-if value="{{ isWhyDialog }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0 0 8px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">WHY TRUST CHANGED</p>
+          <h2 style="margin:0 0 16px;font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:500">{{ whyTitle }}</h2>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <span style="color:#71858f;font:11px/1 'IBM Plex Mono',monospace">{{ whyPrevState }}</span><span style="color:#71858f">→</span><strong style="font:11px/1 'IBM Plex Mono',monospace;color:{{ curColor }}">{{ whyCurState }}</strong>
+          </div>
+          <p style="margin:0 0 16px;color:#b7c6cd;font-size:12px;line-height:1.6">{{ whyConclusion }}</p>
+          <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid rgba(32,55,67,.12);padding-top:14px">
+            <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">PREVIOUS SCORE</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ whyPrevScore }}</dd></div>
+            <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">CURRENT SCORE</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curScore }}</dd></div>
+          </dl>
+        </sc-if>
+
+        <sc-if value="{{ isGuideDialog }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0 0 8px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">THREE-MINUTE DEMO</p>
+          <h2 style="margin:0 0 16px;font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:500">Show the decision changing.</h2>
+          <ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px">
+            <li style="display:flex;gap:10px;align-items:baseline"><span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">01</span><span style="font-size:12px;color:#b7c6cd">Establish the normal baseline — play Normal Navigation and show convergent evidence.</span></li>
+            <li style="display:flex;gap:10px;align-items:baseline"><span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">02</span><span style="font-size:12px;color:#b7c6cd">Separate degradation from attack — GNSS Degradation shows weak geometry is not spoofing.</span></li>
+            <li style="display:flex;gap:10px;align-items:baseline"><span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">03</span><span style="font-size:12px;color:#b7c6cd">Expose a coordinate jump — watch trust cross the quarantine boundary.</span></li>
+            <li style="display:flex;gap:10px;align-items:baseline"><span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">04</span><span style="font-size:12px;color:#b7c6cd">Verify the audit chain in Forensics.</span></li>
+          </ol>
+        </sc-if>
+
+        <sc-if value="{{ isMethodDialog }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0 0 8px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">METHODOLOGY</p>
+          <h2 style="margin:0 0 16px;font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:500">Trust is evidence, not a label.</h2>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">01 · INGESTION</span><p style="margin:4px 0 0;font-size:11px;color:#b7c6cd">CSV, NMEA and normalized observations are validated before they enter the decision pipeline.</p></div>
+            <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">02 · PHYSICAL EVIDENCE</span><p style="margin:4px 0 0;font-size:11px;color:#b7c6cd">Kinematic, temporal, geometric and carrier-level checks declare both their thresholds and availability.</p></div>
+            <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">03 · FUSION</span><p style="margin:4px 0 0;font-size:11px;color:#b7c6cd">Available evidence is weighted into trust and confidence without presenting unavailable data as proof.</p></div>
+            <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">04 · FORENSICS</span><p style="margin:4px 0 0;font-size:11px;color:#b7c6cd">Every decision is linked to the previous event using a SHA-256 hash chain.</p></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isImportDialog }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0 0 8px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">TELEMETRY INGESTION</p>
+          <h2 style="margin:0 0 16px;font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:500">Load a verified navigation stream.</h2>
+          <input id="astraFileInput" type="file" accept=".csv,.nmea,.txt,text/csv,text/plain" onChange="{{ onImportFile }}" style="display:none" />
+          <button onClick="{{ onChooseFile }}" style="width:100%;height:38px;border-radius:6px;border:1px dashed rgba(32,55,67,.24);background:transparent;color:#b7c6cd;font-size:11px;cursor:pointer;margin-bottom:10px">Choose CSV or NMEA file</button>
+          <p style="text-align:center;color:#71858f;font-size:10px;margin:0 0 10px">{{ importStatus }}</p>
+          <textarea id="astraTelemetryInput" data-dc-stable="astraTelemetryInput" value="{{ importText }}" placeholder="timestamp,latitude,longitude,altitude,speed,satellite_count,hdop" style="width:100%;height:70px;background:#030609;border:1px solid rgba(32,55,67,.16);border-radius:6px;color:#b7c6cd;font:10px/1.5 'IBM Plex Mono',monospace;padding:8px;resize:none;box-sizing:border-box"></textarea>
+          <button onClick="{{ onAnalyzeTelemetry }}" style="width:100%;height:36px;margin-top:12px;border-radius:6px;border:none;background:linear-gradient(90deg,#1f3f73,#5795f5);color:#030609;font-size:11px;font-weight:600;cursor:pointer">Analyze telemetry</button>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const SCENARIOS = [
+  { id: "normal_nav", name: "Normal Navigation", category: "GENUINE", description: "Nominal vehicle trajectory under clear sky conditions. Kinematic and physical evidence remain mutually consistent.", expected: "TRUSTED (85–92)", takeaway: "Baseline demonstration of healthy, trusted navigation." },
+  { id: "gnss_degradation", name: "GNSS Degradation (Urban Canyon)", category: "GENUINE DEGRADED", description: "Satellite visibility falls and dilution rises inside a dense urban canyon while vehicle motion remains physically valid.", expected: "DEGRADED (55–65)", takeaway: "Bad GNSS is not automatically spoofing; ASTRA degrades precision without creating a false alarm." },
+  { id: "sudden_spoof", name: "Sudden Spoof (Coordinate Jump)", category: "ATTACK / SPOOF", description: "A fabricated position solution creates an instantaneous multi-kilometre coordinate displacement inconsistent with reported motion.", expected: "SUSPICIOUS → QUARANTINED", takeaway: "Motion consistency and position-jump evidence expose the discontinuity immediately." },
+  { id: "gradual_drift", name: "Gradual Drift (Stealth Spoof)", category: "ATTACK / SPOOF", description: "A subtle ramp offset accumulates slowly to evade a simple point-to-point jump detector.", expected: "TRUSTED → DEGRADED → SUSPICIOUS", takeaway: "Baseline displacement and anomaly attribution reveal a smooth but impossible trajectory." },
+  { id: "replay_meaconing", name: "Replay / Meaconing Attack", category: "ATTACK / REPLAY", description: "Legitimate observations are captured and replayed with frozen timestamps, stale Doppler and static pseudoranges.", expected: "QUARANTINED", takeaway: "Temporal and cross-rate evidence make stale telemetry visible." },
+  { id: "physical_inconsistency", name: "Physical-Layer Inconsistency", category: "PHYSICAL INCONSISTENCY", description: "Carrier Doppler, pseudorange rates and multi-satellite geometry disagree despite a superficially plausible position fix.", expected: "QUARANTINED (8–15)", takeaway: "Physical invariants expose synthetic RF observations that position-only checks cannot see." }
+];
+
+function clamp(v, mn, mx) { return Math.min(mx, Math.max(mn, v)); }
+function scoreForScenario(id, index) {
+  const wave = Math.sin(index * 0.55) * 1.4;
+  if (id === "normal_nav") return 89 + wave;
+  if (id === "gnss_degradation") return index < 7 ? 88 + wave : Math.max(61, 88 - (index - 6) * 2.7) + wave * 0.3;
+  if (id === "sudden_spoof") return index < 10 ? 89 + wave : Math.max(13, 31 - (index - 10) * 3.2);
+  if (id === "gradual_drift") return Math.max(24, 90 - Math.max(0, index - 4) * 3.8 + wave);
+  if (id === "replay_meaconing") return index < 8 ? 88 + wave : Math.max(20, 35 - (index - 8) * 2.8);
+  return index < 6 ? 87 + wave : Math.max(11, 27 - (index - 6) * 3.4);
+}
+function trustState(score) {
+  if (score >= 80) return "TRUSTED";
+  if (score >= 55) return "DEGRADED";
+  if (score >= 35) return "SUSPICIOUS";
+  return "QUARANTINED";
+}
+function evidenceFor(id, score) {
+  const attacked = score < 55;
+  const degraded = score < 80 && !attacked;
+  const checks = [
+    ["Timestamp continuity", "BASIC", "1.000 s", "Δt > 2.0 s", "PASS", "Consecutive observation time remains monotonic."],
+    ["Position jump", "BASIC", "0.42 m", "> 120 m / epoch", "PASS", "Reported displacement agrees with elapsed time."],
+    ["Kinematic coherence", "BASIC", "0.18 m/s²", "> 8.0 m/s²", "PASS", "Speed and heading describe feasible receiver motion."],
+    ["Doppler / range-rate", "PHYSICAL", "0.36 m/s", "RMS > 4.5 m/s", "PASS", "Carrier Doppler agrees with pseudorange change."],
+    ["Pseudorange WLS", "PHYSICAL", "2.8 m", "RMS > 35 m", "PASS", "Raw ranges resolve to the reported position."],
+    ["Multi-satellite consensus", "PHYSICAL", "0.91", "< 0.62", "PASS", "Independent satellite channels agree."],
+    ["Anomaly attribution", "ML", "0.08", "> 0.50", "PASS", "Observation remains inside the learned nominal manifold."]
+  ];
+  if (degraded && id === "gnss_degradation") {
+    checks[4] = ["Pseudorange WLS", "PHYSICAL", "28.4 m", "RMS > 35 m", "WARN", "Urban multipath reduces precision while motion stays coherent."];
+    checks[5] = ["Multi-satellite consensus", "PHYSICAL", "0.66", "< 0.62", "WARN", "Reduced satellite geometry limits confidence."];
+  }
+  if (attacked || (score < 80 && id !== "gnss_degradation")) {
+    if (id === "sudden_spoof") {
+      checks[1] = ["Position jump", "BASIC", "3.82 km", "> 120 m / epoch", "FAIL", "Coordinate displacement is impossible at the reported speed."];
+      checks[2] = ["Kinematic coherence", "BASIC", "38.6 m/s²", "> 8.0 m/s²", "FAIL", "Implied acceleration exceeds the vehicle envelope."];
+    } else if (id === "gradual_drift") {
+      checks[2] = ["Kinematic coherence", "BASIC", "1.12 m/s²", "> 8.0 m/s²", "WARN", "Point motion appears plausible but baseline displacement accumulates."];
+      checks[6] = ["Anomaly attribution", "ML", "0.78", "> 0.50", "FAIL", "Baseline displacement and manifold distance dominate attribution."];
+    } else if (id === "replay_meaconing") {
+      checks[0] = ["Timestamp continuity", "BASIC", "0.000 s", "Δt > 2.0 s", "FAIL", "Observation time is frozen across sequential packets."];
+      checks[3] = ["Doppler / range-rate", "PHYSICAL", "9.74 m/s", "RMS > 4.5 m/s", "FAIL", "Carrier motion remains stale while receiver motion continues."];
+    } else if (id === "physical_inconsistency") {
+      checks[3] = ["Doppler / range-rate", "PHYSICAL", "18.7 m/s", "RMS > 4.5 m/s", "FAIL", "Carrier Doppler contradicts reported range rate."];
+      checks[4] = ["Pseudorange WLS", "PHYSICAL", "87.2 m", "RMS > 35 m", "FAIL", "Independent raw ranges do not resolve to the PVT fix."];
+      checks[5] = ["Multi-satellite consensus", "PHYSICAL", "0.34", "< 0.62", "FAIL", "Satellite channels disagree beyond the physical envelope."];
+    }
+  }
+  const weights = [0.10, 0.16, 0.14, 0.18, 0.18, 0.12, 0.12];
+  return checks.map(([name, category, value, threshold, status, explanation], i) => ({ name, category, value, threshold, status, explanation, weight: weights[i] }));
+}
+function buildSteps(id, count) {
+  const steps = [];
+  let prevState = null, prevHash = "GENESIS";
+  for (let i = 0; i < count; i++) {
+    const score = Number(clamp(scoreForScenario(id, i), 6, 96).toFixed(1));
+    const st = trustState(score);
+    const evidence = evidenceFor(id, score);
+    const fails = evidence.filter((e) => e.status === "FAIL");
+    const warns = evidence.filter((e) => e.status === "WARN");
+    const reasons = [...fails, ...warns].map((e) => e.explanation);
+    const action = st === "TRUSTED" ? "Continue nominal navigation" : st === "DEGRADED" ? "Reduce autonomy confidence" : st === "SUSPICIOUS" ? "Cross-check alternate sensors" : "Reject GNSS and quarantine";
+    const hash = id.replace(/_/g, "") + "e" + String(i).padStart(2, "0") + "8f34c91a6bd27d78a82c6f1e4329";
+    steps.push({
+      index: i, score, state: st,
+      latitude: 28.6139 + i * 0.000045, longitude: 77.209 + i * 0.000071,
+      confidence: Number(clamp(94 - Math.abs(88 - score) * 0.22, 72, 98).toFixed(1)),
+      satellites: id === "gnss_degradation" && i >= 7 ? 5 : 11,
+      hdop: id === "gnss_degradation" && i >= 7 ? 4.2 : 0.8,
+      speed: id === "replay_meaconing" && i >= 8 ? 0 : 12.1,
+      primaryReason: reasons[0] || "All available engineering and physical evidence is mutually consistent.",
+      recommendedAction: action, evidence,
+      hash, prevHash
+    });
+    prevState = st;
+    prevHash = hash;
+  }
+  return steps;
+}
+const COLORS = { TRUSTED: "#5795f5", DEGRADED: "#d8a45c", SUSPICIOUS: "#de8767", QUARANTINED: "#e56a72", INCONCLUSIVE: "#71858f" };
+const STATUS_COLORS = { PASS: "#5795f5", WARN: "#d8a45c", FAIL: "#e56a72", UNAVAILABLE: "#71858f" };
+
+function stepLatLon(step) {
+  const index = step?.index ?? 0;
+  const lat = Number.isFinite(step?.latitude) ? step.latitude : 28.6139 + index * 0.000045;
+  const lon = Number.isFinite(step?.longitude) ? step.longitude : 77.209 + index * 0.000071;
+  return [lat, lon];
+}
+
+const API_BASE = "";
+async function fetchJSON(path, options = {}, timeout = 16000) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(API_BASE + path, { cache: "no-store", ...options, signal: controller.signal });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const detail = payload?.detail?.message || payload?.detail || payload?.message || `Request failed (${response.status})`;
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    }
+    return payload;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+function formatEvidenceValue(value, available = true) {
+  if (!available || value === null || value === undefined) return "N/A";
+  if (typeof value === "number") return Math.abs(value) >= 100 ? value.toFixed(1) : value.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+  return String(value);
+}
+
+function formatUtcTime(value) {
+  const raw = String(value || "");
+  const direct = raw.match(/(?:T|^)(\d{2}:\d{2}:\d{2})/);
+  if (direct) return direct[1] + " UTC";
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? "TIME N/A" : date.toISOString().slice(11, 19) + " UTC";
+}
+
+function normalizeBackendStep(step, index) {
+  const observation = step?.observation || {};
+  const result = step?.result || {};
+  const event = step?.forensic_event || {};
+  const matrix = Array.isArray(result.evidence_matrix) ? result.evidence_matrix : [];
+  return {
+    index,
+    score: Number(result.trust_score ?? 0),
+    state: String(result.trust_state || "INCONCLUSIVE"),
+    confidence: Number(result.confidence ?? 0),
+    satellites: Number(observation.satellite_count ?? observation.satellites?.length ?? 0),
+    hdop: Number(observation.hdop ?? 0),
+    speed: Number(observation.speed ?? 0),
+    latitude: Number(observation.latitude ?? 0),
+    longitude: Number(observation.longitude ?? 0),
+    altitude: Number(observation.altitude ?? 0),
+    heading: Number(observation.heading ?? 0),
+    fixQuality: Number(observation.fix_quality ?? 0),
+    timestamp: observation.timestamp || event.timestamp || "",
+    primaryReason: result.primary_reasons?.[0] || event.primary_reason || "No contradictory evidence detected.",
+    recommendedAction: result.recommended_action || event.recommended_action || "Continue monitoring",
+    evidence: matrix.map((item) => ({
+      name: item.name,
+      category: item.category,
+      value: formatEvidenceValue(item.value, item.is_available !== false),
+      threshold: item.threshold || (item.is_available === false ? "Unavailable" : "Declared threshold"),
+      status: String(item.status || "UNAVAILABLE"),
+      explanation: item.explanation || item.unavailability_reason || "No explanation supplied.",
+      weight: Number(item.weight ?? 0)
+    })),
+    hash: event.current_event_hash || `event-${String(index + 1).padStart(3, "0")}`,
+    prevHash: event.previous_event_hash || (index ? "UNAVAILABLE" : "GENESIS"),
+    forensicEvent: event,
+    whyChanged: step?.why_trust_changed || null
+  };
+}
+
+function normalizedModelSet(payload) {
+  const comparison = payload?.models_comparison || {};
+  const order = ["rules_baseline", "ml_only", "astra_hybrid"];
+  const fallbackNames = ["Rule-based baseline", "ML-only detector", "ASTRA hybrid evidence"];
+  const colors = ["#b7c6cd", "#d8a45c", "#5795f5"];
+  return order.map((key, index) => {
+    const model = comparison[key] || {};
+    const metrics = model.metrics || {};
+    return {
+      tag: `MODEL 0${index + 1}`,
+      name: model.name || fallbackNames[index],
+      f1: Number(metrics.f1_score ?? 0).toFixed(1),
+      acc: Number(metrics.accuracy ?? 0).toFixed(1),
+      prec: Number(metrics.precision ?? 0).toFixed(1),
+      rec: Number(metrics.recall ?? 0).toFixed(1),
+      color: colors[index]
+    };
+  });
+}
+
+class Component extends DCLogic {
+  state = {
+    view: "overview", scenarioId: "normal_nav", steps: buildSteps("normal_nav", 25),
+    currentIndex: 0, playing: false, evidenceFilter: "ALL", expandedEvidence: -1,
+    expandedEvent: -1, incidentStatuses: {}, selectedIncident: null,
+    mode: "operator", helpOpen: false, dialogOpen: null, speed: 1,
+    online: false, connectionLabel: "CHECKING CORE", connectionColor: "#71858f",
+    sourceLabel: "LOCAL SIMULATION", utcLabel: "--:--:--", feedName: "Normal Navigation",
+    importText: "", importType: "csv", importStatus: "or paste telemetry below",
+    ledgerEvents: [], models: null
+  };
+
+  _mapStyle = "satellite";
+
+  navConfig = [
+    { id: "overview", label: "Overview" },
+    { id: "scenario", label: "Scenario lab" },
+    { id: "evidence", label: "Evidence" },
+    { id: "incident", label: "Incident Watch" },
+    { id: "forensics", label: "Forensics" },
+    { id: "evaluation", label: "Evaluation" }
+  ];
+
+  titleFor(id) {
+    return { overview: "Operational overview", scenario: "Scenario laboratory", evidence: "Evidence matrix", incident: "Incident watch", forensics: "Forensic ledger", evaluation: "Scientific evaluation" }[id];
+  }
+
+  componentDidMount() {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem("astraIncidentStatuses") || "null");
+      if (saved && typeof saved === "object") {
+        this.setState({ incidentStatuses: { ...this.state.incidentStatuses, ...saved } });
+      }
+    } catch (_) {}
+    const tickClock = () => this.setState({ utcLabel: new Date().toISOString().slice(11, 19) });
+    tickClock();
+    this._clock = window.setInterval(tickClock, 1000);
+    this.loadScenario("normal_nav");
+    window.addEventListener("resize", () => requestAnimationFrame(() => this._trajectoryMap?.invalidateSize(false)), { passive: true });
+  }
+
+  componentWillUnmount() {
+    window.clearInterval(this._timer);
+    window.clearInterval(this._clock);
+    this._trajectoryMap?.remove();
+  }
+
+  componentDidUpdate() {
+    this.syncTrajectoryMap();
+  }
+
+  onSetMapStyle(style) {
+    this.applyMapStyle(style);
+  }
+
+  applyMapStyle(style) {
+    this._mapStyle = style === "dark" ? "dark" : "satellite";
+    if (!this._trajectoryMap || !window.L) return;
+    if (this._trajectoryTiles) this._trajectoryMap.removeLayer(this._trajectoryTiles);
+    if (this._trajectoryLabels) { this._trajectoryMap.removeLayer(this._trajectoryLabels); this._trajectoryLabels = null; }
+    const satellite = this._mapStyle === "satellite";
+    const url = satellite
+      ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      : "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+    const tileOptions = { maxZoom: 19, maxNativeZoom: satellite ? 19 : 16, attribution: "Tiles © Esri", crossOrigin: true };
+    this._trajectoryTiles = window.L.tileLayer(url, tileOptions).addTo(this._trajectoryMap);
+    if (!satellite) {
+      this._trajectoryLabels = window.L.tileLayer(
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, maxNativeZoom: 16, crossOrigin: true }
+      ).addTo(this._trajectoryMap);
+    }
+    const shell = document.getElementById("astraTrajectoryMap")?.closest(".astra-map-shell");
+    this._trajectoryTiles.once("load", () => shell?.classList.remove("is-offline"));
+    this._trajectoryTiles.on("tileerror", () => shell?.classList.add("is-offline"));
+  }
+
+  syncTrajectoryMap() {
+    const container = document.getElementById("astraTrajectoryMap");
+    if (!container || !window.L) return;
+    const s = this.state;
+    const steps = s.steps;
+    if (!steps.length) return;
+
+    if (!this._trajectoryMap) {
+      this._trajectoryMap = window.L.map(container, {
+        center: [28.6139, 77.209], zoom: 16, zoomControl: false,
+        attributionControl: true, preferCanvas: true
+      });
+      window.L.control.zoom({ position: "bottomright" }).addTo(this._trajectoryMap);
+      this._trajectoryRoutes = window.L.layerGroup().addTo(this._trajectoryMap);
+      this._trajectoryMarkers = window.L.layerGroup().addTo(this._trajectoryMap);
+      this.applyMapStyle(this._mapStyle);
+      requestAnimationFrame(() => this._trajectoryMap.invalidateSize(false));
+    } else {
+      this._trajectoryMap.invalidateSize(false);
+    }
+
+    this._trajectoryRoutes.clearLayers();
+    this._trajectoryMarkers.clearLayers();
+
+    const positions = steps.map(stepLatLon);
+    window.L.polyline(positions, { color: "#3d5a6b", opacity: 0.3, weight: 1.2, dashArray: "3 8", interactive: false }).addTo(this._trajectoryRoutes);
+
+    for (let i = 1; i <= s.currentIndex; i += 1) {
+      window.L.polyline([positions[i - 1], positions[i]], {
+        color: COLORS[steps[i]?.state] || "#71858f", opacity: 0.92, weight: 3.2, lineCap: "round", interactive: false
+      }).addTo(this._trajectoryRoutes);
+    }
+
+    positions.forEach((position, index) => {
+      const traversed = index <= s.currentIndex;
+      const color = COLORS[steps[index]?.state] || "#71858f";
+      const marker = window.L.circleMarker(position, {
+        radius: index === s.currentIndex ? 4.5 : 2.5,
+        color: traversed ? color : "#3d5a6b",
+        weight: 1,
+        fillColor: traversed ? color : "#243440",
+        fillOpacity: traversed ? 0.85 : 0.28,
+        opacity: traversed ? 0.9 : 0.35
+      }).addTo(this._trajectoryMarkers);
+      marker.on("click", () => {
+        window.clearInterval(this._timer);
+        this.setState({ playing: false });
+        this.setStep(index);
+      });
+      marker.bindTooltip(
+        `Epoch ${String(index).padStart(2, "0")} · ${steps[index]?.state || "—"} · ${Number(steps[index]?.score || 0).toFixed(1)}`,
+        { direction: "top", offset: [0, -5] }
+      );
+    });
+
+    const current = positions[s.currentIndex];
+    const currentColor = COLORS[steps[s.currentIndex]?.state] || "#71858f";
+    window.L.marker(current, {
+      interactive: false, zIndexOffset: 800,
+      icon: window.L.divIcon({
+        className: "astra-vehicle-marker",
+        html: `<span style="--vehicle-color:${currentColor}"><i></i></span>`,
+        iconSize: [34, 34], iconAnchor: [17, 17]
+      })
+    }).addTo(this._trajectoryMarkers);
+
+    const datasetKey = `${s.scenarioId}:${steps.length}:${positions[positions.length - 1]?.join(":")}`;
+    if (this._mapDatasetKey !== datasetKey) {
+      this._mapDatasetKey = datasetKey;
+      const bounds = window.L.latLngBounds(positions);
+      if (bounds.isValid()) requestAnimationFrame(() => this._trajectoryMap.fitBounds(bounds, { padding: [24, 24], maxZoom: 17, animate: false }));
+    } else if (s.playing) {
+      this._trajectoryMap.panTo(current, { animate: true, duration: 0.35, easeLinearity: 0.3 });
+    }
+  }
+
+  async loadScenario(id) {
+    window.clearInterval(this._timer);
+    const scenario = SCENARIOS.find((item) => item.id === id) || SCENARIOS[0];
+    const fallback = buildSteps(id, 25);
+    this.setState({
+      scenarioId: id, steps: fallback, currentIndex: 0, playing: false, view: "overview",
+      expandedEvidence: -1, ledgerEvents: [], feedName: scenario.name,
+      sourceLabel: "SIMULATED DATA"
+    });
+    try {
+      const payload = await fetchJSON(`/api/simulate/${encodeURIComponent(id)}?steps=25`, { method: "POST" });
+      const steps = (payload.steps || []).map(normalizeBackendStep);
+      if (!steps.length) throw new Error("The analysis service returned no telemetry epochs.");
+      this.setState({
+        steps, currentIndex: 0, online: true, connectionLabel: "CORE CONNECTED",
+        connectionColor: "#5795f5", sourceLabel: "CORE SIMULATION",
+        feedName: scenario.name
+      });
+    } catch (error) {
+      this.setState({
+        steps: fallback, online: false, connectionLabel: "DEMO MODE",
+        connectionColor: "#71858f", sourceLabel: "LOCAL SIMULATION"
+      });
+    }
+  }
+
+  async loadForensics() {
+    this.setState({ view: "forensics" });
+    try {
+      const payload = await fetchJSON("/api/forensics", {}, 6000);
+      this.setState({ ledgerEvents: Array.isArray(payload.events) ? payload.events : [], online: true, connectionLabel: "CORE CONNECTED", connectionColor: "#5795f5" });
+    } catch (_) {
+      this.setState({ online: false, connectionLabel: "DEMO MODE", connectionColor: "#71858f" });
+    }
+  }
+
+  async loadEvaluation() {
+    this.setState({ view: "evaluation" });
+    if (this.state.models) return;
+    try {
+      const payload = await fetchJSON("/api/evaluation", {}, 30000);
+      this.setState({ models: normalizedModelSet(payload), online: true, connectionLabel: "CORE CONNECTED", connectionColor: "#5795f5" });
+    } catch (_) {
+      this.setState({ online: false, connectionLabel: "DEMO MODE", connectionColor: "#71858f" });
+    }
+  }
+
+  async importFile(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const content = await file.text();
+    const type = /\.nmea$|\.txt$/i.test(file.name) && content.trim().startsWith("$") ? "nmea" : "csv";
+    const textarea = document.getElementById("astraTelemetryInput");
+    if (textarea) textarea.value = content;
+    this.setState({ importText: content, importType: type, importStatus: `${file.name} · ready to analyze` });
+  }
+
+  async analyzeTelemetry() {
+    const content = document.getElementById("astraTelemetryInput")?.value?.trim() || this.state.importText.trim();
+    if (!content) {
+      this.setState({ importStatus: "Paste telemetry or choose a file first." });
+      return;
+    }
+    const type = content.startsWith("$") ? "nmea" : this.state.importType;
+    this.setState({ importStatus: "Analyzing through ASTRA Core…" });
+    try {
+      const payload = await fetchJSON("/api/ingest/text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, type })
+      }, 30000);
+      const steps = (payload.steps || []).map(normalizeBackendStep);
+      if (!steps.length) throw new Error("No valid telemetry rows were found.");
+      this.setState({
+        steps, currentIndex: 0, playing: false, view: "overview", dialogOpen: null,
+        online: true, connectionLabel: "CORE CONNECTED", connectionColor: "#5795f5",
+        sourceLabel: "UPLOADED DATA", feedName: "Imported telemetry", ledgerEvents: [],
+        importStatus: "Telemetry verified and analyzed."
+      });
+    } catch (error) {
+      this.setState({ importStatus: error.name === "AbortError" ? "Analysis timed out." : error.message, online: false, connectionLabel: "DEMO MODE", connectionColor: "#71858f" });
+    }
+  }
+
+  setStep(i) {
+    this.setState({ currentIndex: clamp(Number(i), 0, this.state.steps.length - 1) });
+  }
+
+  togglePlay() {
+    if (this.state.playing) {
+      window.clearInterval(this._timer);
+      this.setState({ playing: false });
+      return;
+    }
+    if (this.state.currentIndex >= this.state.steps.length - 1) this.setState({ currentIndex: 0 });
+    this.setState({ playing: true });
+    this._timer = window.setInterval(() => {
+      if (this.state.currentIndex >= this.state.steps.length - 1) { window.clearInterval(this._timer); this.setState({ playing: false }); return; }
+      this.setState((s) => ({ currentIndex: s.currentIndex + 1 }));
+    }, Math.max(120, 550 / this.state.speed));
+  }
+
+  acknowledgeIncident(key) {
+    if (!key) return;
+    const next = { ...this.state.incidentStatuses, [key]: "ACK" };
+    try { window.localStorage.setItem("astraIncidentStatuses", JSON.stringify(next)); } catch (_) {}
+    this.setState({ incidentStatuses: next });
+  }
+
+  viewIncidentEvidence(stepIndex) {
+    this.setState({
+      view: "evidence",
+      currentIndex: clamp(stepIndex ?? 0, 0, this.state.steps.length - 1),
+      evidenceFilter: "ALL",
+      expandedEvidence: -1
+    });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const view = s.view;
+    const steps = s.steps;
+    const cur = steps[s.currentIndex];
+    const scenario = SCENARIOS.find((sc) => sc.id === s.scenarioId);
+
+    const openIncidentCountForNav = steps.filter((st) => {
+      if (st.state !== "SUSPICIOUS" && st.state !== "QUARANTINED") return false;
+      const key = (st.forensicEvent || {}).event_id || `epoch-${st.index}`;
+      return (s.incidentStatuses[key] || "OPEN") === "OPEN";
+    }).length;
+    const navItems = this.navConfig.map((item) => {
+      const active = item.id === view;
+      return {
+        label: item.label, badge: item.id === "incident" && openIncidentCountForNav > 0 ? String(openIncidentCountForNav) : null,
+        onClick: () => item.id === "forensics" ? this.loadForensics() : item.id === "evaluation" ? this.loadEvaluation() : this.setState({ view: item.id }),
+        style: `position:relative;height:34px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:6px;border:none;width:100%;text-align:left;cursor:pointer;font-size:11px;font-weight:500;font-family:inherit;color:${active ? "#dbe5e9" : "#71858f"};background:${active ? "linear-gradient(90deg,rgba(87,149,245,.22),rgba(87,149,245,.02))" : "transparent"}`,
+        dotStyle: `width:5px;height:5px;border-radius:50%;background:${active ? "#5795f5" : "transparent"};box-shadow:${active ? "0 0 10px rgba(87,149,245,.7)" : "none"}`
+      };
+    });
+
+    // timeline svg path
+    const W = 600, H = 160, padX = 10, padY = 14;
+    const x = (i) => padX + (i / Math.max(1, steps.length - 1)) * (W - padX * 2);
+    const y = (score) => padY + (100 - score) / 100 * (H - padY * 2);
+    const pts = steps.map((st, i) => [x(i), y(st.score)]);
+    const timelinePath = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+    const timelineArea = timelinePath + ` L${x(steps.length - 1).toFixed(1)},${H - padY} L${x(0).toFixed(1)},${H - padY} Z`;
+    const marker = pts[s.currentIndex] || pts[0];
+
+    const history = steps.slice(Math.max(0, s.currentIndex - 19), s.currentIndex + 1);
+    const sparkPath = (values, mn, mx) => {
+      const w = 160, h = 48, pad = 3;
+      const sx = (i) => pad + (i / Math.max(1, values.length - 1)) * (w - pad * 2);
+      const sy = (v) => pad + (mx - clamp(v, mn, mx)) / Math.max(0.0001, mx - mn) * (h - pad * 2);
+      return values.map((v, i) => (i ? "L" : "M") + sx(i).toFixed(1) + "," + sy(v).toFixed(1)).join(" ");
+    };
+    const sparkTrust = sparkPath(history.map((h) => h.score), 0, 100);
+    const sparkSpeed = sparkPath(history.map((h) => h.speed), 0, 15);
+    const sparkHdop = sparkPath(history.map((h) => h.hdop), 0, 5);
+
+    const evidenceFilters = ["ALL", "BASIC", "PHYSICAL", "ML"].map((f) => ({
+      label: f === "ALL" ? "All" : f,
+      onClick: () => this.setState({ evidenceFilter: f, expandedEvidence: -1 }),
+      style: `padding:6px 12px;border-radius:20px;border:1px solid ${s.evidenceFilter === f ? "rgba(87,149,245,.5)" : "rgba(32,55,67,.12)"};background:${s.evidenceFilter === f ? "rgba(87,149,245,.16)" : "transparent"};color:${s.evidenceFilter === f ? "#96c0fb" : "#71858f"};font:9px/1 'IBM Plex Mono',monospace;cursor:pointer`
+    }));
+    const evidenceRows = (cur?.evidence || []).filter((e) => s.evidenceFilter === "ALL" || e.category === s.evidenceFilter).map((e, i) => ({
+      name: e.name, layer: e.category, value: e.value, threshold: e.threshold, weight: Number(e.weight || 0).toFixed(2) + "×",
+      status: e.status, color: STATUS_COLORS[e.status], explanation: e.explanation,
+      expanded: s.expandedEvidence === i, onClick: () => this.setState({ expandedEvidence: s.expandedEvidence === i ? -1 : i })
+    }));
+
+    const scenarioList = SCENARIOS.map((sc, i) => ({
+      num: String(i + 1).padStart(2, "0"), name: sc.name,
+      onClick: () => this.setState({ scenarioId: sc.id }),
+      style: `display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid rgba(32,55,67,.12);border-radius:10px;background:${sc.id === s.scenarioId ? "rgba(87,149,245,.14)" : "transparent"};cursor:pointer;text-align:left;font-family:inherit;color:#dbe5e9`
+    }));
+
+    // Incidents are derived live from the currently loaded feed's forensic events —
+    // any epoch ASTRA scored SUSPICIOUS or QUARANTINED, not canned demo data.
+    const incidentDefs = steps
+      .filter((st) => st.state === "SUSPICIOUS" || st.state === "QUARANTINED")
+      .map((st) => {
+        const ev = st.forensicEvent || {};
+        const checks = Array.isArray(ev.triggered_checks) ? ev.triggered_checks : [];
+        return {
+          key: ev.event_id || `epoch-${st.index}`,
+          title: st.state === "QUARANTINED" ? "Quarantined epoch detected" : "Suspicious epoch detected",
+          subtitle: `${s.feedName || "Current feed"} · Epoch ${st.index + 1} / ${steps.length} · ${st.primaryReason}`,
+          scoreChange: st.score.toFixed(1),
+          severe: st.state === "QUARANTINED",
+          detail: st.primaryReason,
+          stream: s.feedName || "SIMULATED FEED",
+          epoch: `${st.index + 1} / ${steps.length}`,
+          layer: checks.length ? checks.join(", ") : "General evidence",
+          hash: st.hash,
+          action: st.recommendedAction,
+          stepIndex: st.index
+        };
+      });
+    const incidents = incidentDefs.map((inc) => {
+      const status = s.incidentStatuses[inc.key] || "OPEN";
+      const selected = s.selectedIncident === inc.key;
+      const dotColor = status === "ACK" ? "#48c78e" : inc.severe ? "#e56a72" : "#d8a45c";
+      const rgb = dotColor === "#e56a72" ? "229,106,114" : dotColor === "#d8a45c" ? "216,164,92" : "72,199,142";
+      return {
+        title: inc.title, subtitle: inc.subtitle, scoreChange: inc.scoreChange, status,
+        dotColor, borderColor: `rgba(${rgb},.3)`,
+        pillBg: `rgba(${rgb},.08)`,
+        bg: selected ? "linear-gradient(90deg,rgba(229,106,114,.14),transparent)" : "transparent",
+        onClick: () => this.setState({ selectedIncident: inc.key })
+      };
+    });
+    const selectedKey = incidentDefs.some((i) => i.key === s.selectedIncident) ? s.selectedIncident : (incidentDefs[0]?.key ?? null);
+    const selInc = incidentDefs.find((i) => i.key === selectedKey);
+    const selStatus = selectedKey ? (s.incidentStatuses[selectedKey] || "OPEN") : null;
+    const incidentOpenCount = incidentDefs.filter((inc) => (s.incidentStatuses[inc.key] || "OPEN") === "OPEN").length;
+    const incidentAckCount = incidentDefs.filter((inc) => (s.incidentStatuses[inc.key] || "OPEN") === "ACK").length;
+    const incidentCriticalCount = incidentDefs.filter((inc) => inc.severe).length;
+    const incidentWarningCount = incidentDefs.filter((inc) => !inc.severe).length;
+
+    const ledgerSource = s.ledgerEvents.length ? s.ledgerEvents.map((event, index) => ({
+      index: Number(event.sequence ?? index + 1) - 1,
+      hash: event.current_event_hash || "UNAVAILABLE",
+      prevHash: event.previous_event_hash || "GENESIS",
+      state: String(event.trust_state || "INCONCLUSIVE"),
+      timestamp: event.timestamp || "",
+      primaryReason: event.primary_reason || "No reason recorded.",
+      recommendedAction: event.recommended_action || "Continue monitoring"
+    })) : steps;
+    const ledgerRows = ledgerSource.slice().reverse().map((st) => ({
+      seq: String(st.index + 1).padStart(3, "0"),
+      hash: st.hash.slice(0, 6) + "…" + st.hash.slice(-6),
+      prevHash: st.prevHash === "GENESIS" ? "GENESIS" : st.prevHash.slice(0, 6) + "…" + st.prevHash.slice(-6),
+      state: st.state, color: COLORS[st.state] || "#71858f", time: formatUtcTime(st.timestamp),
+      reason: st.primaryReason, action: st.recommendedAction,
+      expanded: s.expandedEvent === st.index, onClick: () => this.setState({ expandedEvent: s.expandedEvent === st.index ? -1 : st.index })
+    }));
+
+    return {
+      navItems, pageTitle: this.titleFor(view),
+      connectionLabel: s.connectionLabel, connectionColor: s.connectionColor,
+      sourceLabel: s.sourceLabel, utcLabel: s.utcLabel,
+      isOverview: view === "overview", isScenario: view === "scenario", isEvidence: view === "evidence",
+      isIncident: view === "incident", isForensics: view === "forensics", isEvaluation: view === "evaluation",
+      showFeedDock: view === "overview" || view === "scenario" || view === "evidence",
+
+      curColor: COLORS[cur?.state] || "#71858f", curState: cur?.state || "—", curScore: (cur?.score ?? 0).toFixed(1),
+      curReason: cur?.primaryReason || "", curAction: cur?.recommendedAction || "", curConfidence: cur?.confidence ?? 0,
+      curSatellites: cur?.satellites ?? "—", curHdop: Number(cur?.hdop ?? 0).toFixed(2), curSpeed: Number(cur?.speed ?? 0).toFixed(1) + " m/s",
+      curLat: stepLatLon(cur)[0].toFixed(6) + "°", curLon: stepLatLon(cur)[1].toFixed(6) + "°",
+      curAltitude: Number(cur?.altitude ?? (215 + (cur?.index ?? 0) * 0.12)).toFixed(1) + " m", curHeading: Number(cur?.heading ?? 65.2).toFixed(1) + "°", curFix: String(cur?.fixQuality ?? 1),
+      sparkTrust, sparkSpeed, sparkHdop,
+      speedOptions: [1, 2, 4].map((sp) => ({ label: sp + "×", onClick: () => this.setState({ speed: sp }), style: `height:22px;padding:0 8px;border-radius:5px;border:1px solid ${s.speed === sp ? "rgba(87,149,245,.5)" : "rgba(32,55,67,.14)"};background:${s.speed === sp ? "rgba(87,149,245,.18)" : "transparent"};color:${s.speed === sp ? "#96c0fb" : "#71858f"};font-size:9px;cursor:pointer;font-family:inherit` })),
+      onGoEvidence: () => this.setState({ view: "evidence" }),
+      evidenceSnapshot: (cur?.evidence || []).slice(0, 5).map((e) => ({ name: e.name, status: e.status, color: STATUS_COLORS[e.status] })),
+      scenarioName: s.feedName || scenario?.name || "", epochLabel: String(s.currentIndex).padStart(2, "0") + " / " + String(steps.length - 1).padStart(2, "0"),
+      maxIndex: steps.length - 1, currentIndex: s.currentIndex,
+      timelinePath, timelineArea, timelineMarkerX: marker[0].toFixed(1), timelineMarkerY: marker[1].toFixed(1),
+      mapStyleOptions: [{ id: "satellite", label: "Sat" }, { id: "dark", label: "Dark" }].map((opt) => ({
+        label: opt.label,
+        onClick: () => this.onSetMapStyle(opt.id),
+        style: `height:22px;padding:0 8px;border-radius:20px;border:1px solid ${this._mapStyle === opt.id ? "rgba(87,149,245,.5)" : "rgba(32,55,67,.24)"};background:${this._mapStyle === opt.id ? "rgba(87,149,245,.22)" : "rgba(3,6,9,.72)"};color:${this._mapStyle === opt.id ? "#96c0fb" : "#71858f"};font:8px/1 'IBM Plex Mono',monospace;cursor:pointer;backdrop-filter:blur(6px)`
+      })),
+      onScrub: (e) => { window.clearInterval(this._timer); this.setState({ playing: false }); this.setStep(e.target.value); },
+      onReset: () => { window.clearInterval(this._timer); this.setState({ playing: false, currentIndex: 0 }); },
+      onNext: () => { window.clearInterval(this._timer); this.setState({ playing: false }); this.setStep(s.currentIndex + 1); },
+      onTogglePlay: () => this.togglePlay(), playLabel: s.playing ? "Pause" : "Play analysis",
+
+      scenarioList, selScenarioNum: String(SCENARIOS.findIndex((sc) => sc.id === s.scenarioId) + 1).padStart(2, "0"),
+      selScenarioCategory: scenario?.category, selScenarioName: scenario?.name, selScenarioDescription: scenario?.description,
+      selScenarioExpected: scenario?.expected, selScenarioTakeaway: scenario?.takeaway,
+      onRunScenario: () => this.loadScenario(s.scenarioId),
+
+      evidenceFilters, evidenceRows,
+
+      incidents, selIncidentTag: !selInc ? "NO ACTIVE INCIDENTS" : selInc.severe ? "CRITICAL / SELECTED" : "WARNING / SELECTED",
+      selIncidentTitle: selInc?.title || "No incidents in current feed",
+      selIncidentDetail: selInc?.detail || "This feed has not produced any suspicious or quarantined epochs.",
+      selIncidentStream: selInc?.stream || "—", selIncidentEpoch: selInc?.epoch || "—", selIncidentLayer: selInc?.layer || "—",
+      selIncidentHash: selInc?.hash || "—", selIncidentAction: selInc?.action || "Continue monitoring",
+      incidentOpenCount, incidentAckCount, incidentCriticalCount, incidentWarningCount,
+      incidentFeedSummary: `${s.feedName || "Current feed"} · ${steps.length} epoch${steps.length === 1 ? "" : "s"} scanned`,
+      ackButtonLabel: !selInc ? "No incident" : selStatus === "ACK" ? "Acknowledged" : "Acknowledge",
+      ackButtonBg: selStatus === "ACK" ? "rgba(216,164,92,.2)" : "linear-gradient(90deg,#1f3f73,#5795f5)",
+      onAcknowledge: () => this.acknowledgeIncident(selectedKey),
+      onViewIncidentEvidence: () => this.viewIncidentEvidence(selInc?.stepIndex ?? 0),
+
+      eventCount: ledgerSource.length, lastSequence: String(ledgerSource.length).padStart(4, "0"), ledgerRows,
+
+      operatorModeStyle: `height:24px;padding:0 10px;border-radius:14px;border:none;font-size:9px;cursor:pointer;font-family:inherit;background:${s.mode === "operator" ? "#5795f5" : "transparent"};color:${s.mode === "operator" ? "#030609" : "#71858f"}`,
+      forensicModeStyle: `height:24px;padding:0 10px;border-radius:14px;border:none;font-size:9px;cursor:pointer;font-family:inherit;background:${s.mode === "forensic" ? "#5795f5" : "transparent"};color:${s.mode === "forensic" ? "#030609" : "#71858f"}`,
+      onSetOperatorMode: () => this.setState({ mode: "operator" }),
+      onSetForensicMode: () => this.setState({ mode: "forensic" }),
+      helpOpen: s.helpOpen,
+      onToggleHelp: () => this.setState({ helpOpen: !s.helpOpen }),
+      onOpenGuide: () => this.setState({ helpOpen: false, dialogOpen: "guide" }),
+      onOpenMethod: () => this.setState({ helpOpen: false, dialogOpen: "method" }),
+      onOpenImport: () => this.setState({ dialogOpen: "import" }),
+      onOpenWhy: () => this.setState({ dialogOpen: "why" }),
+      onCloseDialog: () => this.setState({ dialogOpen: null }),
+      stopPropagation: (e) => e.stopPropagation(),
+      importText: s.importText, importStatus: s.importStatus,
+      onChooseFile: () => document.getElementById("astraFileInput")?.click(),
+      onImportFile: (event) => this.importFile(event),
+      onAnalyzeTelemetry: () => this.analyzeTelemetry(),
+      dialogOpen: !!s.dialogOpen, isWhyDialog: s.dialogOpen === "why", isGuideDialog: s.dialogOpen === "guide",
+      isMethodDialog: s.dialogOpen === "method", isImportDialog: s.dialogOpen === "import",
+      whyTitle: cur?.index > 0 && steps[cur.index - 1]?.state !== cur?.state ? "The decision boundary changed." : "Trust remains inside its current state.",
+      whyPrevState: cur?.index > 0 ? steps[cur.index - 1].state : "—", whyCurState: cur?.state,
+      whyPrevScore: cur?.index > 0 ? steps[cur.index - 1].score.toFixed(1) : "—",
+      whyConclusion: cur?.index > 0 && steps[cur.index - 1]?.state !== cur?.state ? `Trust changed because ${cur.primaryReason}` : "No material trust-state transition at this epoch.",
+
+      scenarioOptions: SCENARIOS.map((sc) => ({ id: sc.id, name: sc.name })),
+      scenarioSelectValue: s.scenarioId,
+      onSelectDockScenario: (e) => this.loadScenario(e.target.value),
+      dockProgress: (s.currentIndex / Math.max(1, steps.length - 1) * 100).toFixed(1),
+
+      models: s.models || [
+        { tag: "MODEL 01", name: "Rule-based baseline", f1: "66.7", acc: "66.7", prec: "100.0", rec: "50.0", color: "#b7c6cd" },
+        { tag: "MODEL 02", name: "ML-only detector", f1: "88.9", acc: "83.3", prec: "80.0", rec: "100.0", color: "#d8a45c" },
+        { tag: "MODEL 03", name: "ASTRA hybrid evidence", f1: "100.0", acc: "100.0", prec: "100.0", rec: "100.0", color: "#5795f5" }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+/* ASTRA shared design tokens — repainted to match Mission Control's real inline-styled
+   product palette (main.html) rather than the old unused teal/bioluminescent theme.
+   Imported by styles.css (landing page). main.css is unreferenced by any page and is
+   not part of the live app graph, so retargeting these values is safe. Variable names
+   are kept so existing var() call sites repaint automatically. */
+
+:root {
+  /* ---- Surface stack (darkest -> raised) ---- */
+  --black: #030609;      /* Mission Control canvas — primary background */
+  --black-2: #060d13;    /* recessed panels */
+  --carbon: #060d13;     /* legacy alias (styles.css) */
+  --obsidian: #0b141b;   /* raised chip/node backgrounds (styles.css) */
+  --panel: #0b141b;      /* card fill */
+  --panel-2: #060d13;    /* recessed card fill */
+  --kelp: #0b141b;       /* explicit alias for new component CSS */
+  --deep: #060d13;       /* explicit alias for new component CSS */
+  --abyss: #030609;      /* explicit alias for new component CSS */
+
+  /* ---- Borders / dividers ---- */
+  --graphite: rgba(32, 55, 67, .16);
+  --smoke: rgba(32, 55, 67, .32);
+  --line: rgba(32, 55, 67, .16);
+  --line-strong: rgba(32, 55, 67, .32);
+
+  /* ---- Text ---- */
+  --frost: #dbe5e9;      /* Platinum      — headings, nav, high-contrast text */
+  --silver: #b7c6cd;     /* Silver Mist   — secondary body text */
+  --platinum: #71858f;   /* Slate Deep    — tertiary/dim labels (legacy role) */
+  --muted: #71858f;      /* Slate Deep    — dim labels (main.css) */
+  --mist: #dbe5e9;       /* Liquid Mist   — emphasis text */
+
+  /* ---- Accent ---- */
+  --blue: #5795f5;       /* Mission Control accent blue — links, active states, CTA fill */
+  --violet: #3e6fce;     /* dimmer accent — secondary accent (main.css) */
+  --violet-2: #5795f5;   /* accent blue — primary accent (main.css) */
+  --halo: #96c0fb;       /* light accent-blue — hover/highlight state */
+  --teal: #73aaf8;       /* mid accent-blue — reserved/legacy */
+  --orange: #71858f;     /* muted slate — eyebrow/category-label accent (legacy name) */
+  --lavender: #dbe5e9;   /* stat numbers — same as --frost, no separate hue */
+
+  /* Semantic status colors (functional, intentionally outside the brand blue scale) */
+  --green: #5795f5;
+  --yellow: #d9a857;
+  --red: #e56a72;
+
+  /* ---- CTA fill: a two-stop blue gradient in Mission Control's own accent family
+     (--blue -> --halo), not the old teal->aqua->lavender rainbow. Mission Control's own
+     button gradient (#1f3f73 -> #5795f5) was tried first but its dark end fails contrast
+     against any single text color; both stops here stay light enough that dark text
+     reads clearly across the whole fill. ---- */
+  --gradient-bio: linear-gradient(90deg, var(--blue), var(--halo));
+  --gradient-bio-text: #04070a; /* dark text for use on the accent-blue gradient */
+
+  /* ---- Type ---- */
+  --display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --text: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+
+  /* ---- Shape ---- */
+  --radius-card: 16px;
+  --radius-sm: 6px;
+
+  /* ---- Spacing scale ---- */
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-32: 32px;
+  --space-36: 36px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-64: 64px;
+  --space-80: 80px;
+  --space-120: 120px;
+  --space-140: 140px;
+  --space-160: 160px;
+}

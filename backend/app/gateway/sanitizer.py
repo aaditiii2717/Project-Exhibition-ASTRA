@@ -6,7 +6,6 @@ Also computes SHA-256 dataset hashes for tamper detection and parses raw NMEA/CS
 
 import math
 import hashlib
-import json
 from datetime import datetime
 from typing import Dict, Any, List, Tuple, Optional
 from ..core.schema import GNSSObservation, DatasetIntegrity

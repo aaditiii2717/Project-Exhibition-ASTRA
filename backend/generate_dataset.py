@@ -5,8 +5,7 @@ import os
 def generate_astra_dataset(n_samples=50000, output_path="astra_training_dataset.csv"):
     np.random.seed(42)
     
-    # We want 3 clusters: Nominal (0), Degraded (1), Spoofed (2)
-    # Let's make it 50% nominal, 25% degraded, 25% spoofed
+    # Class split: 50% nominal (0), 25% degraded (1), 25% spoofed (2)
     n_nom = int(n_samples * 0.5)
     n_deg = int(n_samples * 0.25)
     n_spf = n_samples - n_nom - n_deg
@@ -16,7 +15,6 @@ def generate_astra_dataset(n_samples=50000, output_path="astra_training_dataset.
     print(f" - Degraded: {n_deg}")
     print(f" - Spoofed: {n_spf}")
 
-    # 1. Normal navigation cluster
     norm_disp = np.random.normal(12.0, 3.0, n_nom)
     norm_spd = norm_disp  # dt=1.0s
     norm_diff = np.random.exponential(0.5, n_nom)
@@ -39,7 +37,7 @@ def generate_astra_dataset(n_samples=50000, output_path="astra_training_dataset.
     ])
     y_normal = np.zeros(n_nom)  # 0 = Nominal
 
-    # 2. Degraded cluster (urban canyon, bad geometry, high multipath)
+    # Degraded cluster: urban canyon, bad geometry, high multipath
     deg_disp = np.random.normal(12.0, 5.0, n_deg)
     deg_spd = deg_disp
     deg_diff = np.random.exponential(2.0, n_deg)
@@ -62,7 +60,7 @@ def generate_astra_dataset(n_samples=50000, output_path="astra_training_dataset.
     ])
     y_degraded = np.ones(n_deg) * 1  # 1 = Degraded
 
-    # 3. Spoofed / Attack cluster (huge jumps, contradictions)
+    # Spoofed cluster: large jumps and cross-signal contradictions
     spoof_disp = np.random.uniform(80.0, 3000.0, n_spf)
     spoof_spd = np.random.normal(15.0, 5.0, n_spf)
     spoof_diff = np.abs(spoof_disp - spoof_spd)
@@ -85,7 +83,6 @@ def generate_astra_dataset(n_samples=50000, output_path="astra_training_dataset.
     ])
     y_spoof = np.ones(n_spf) * 2  # 2 = Spoofed / Malicious
 
-    # Combine all
     X = np.vstack([X_normal, X_degraded, X_spoof])
     y = np.concatenate([y_normal, y_degraded, y_spoof])
 
@@ -109,7 +106,6 @@ def generate_astra_dataset(n_samples=50000, output_path="astra_training_dataset.
     df = pd.DataFrame(X, columns=columns)
     df['label'] = y.astype(int)
     
-    # Shuffle the dataset
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
     df.to_csv(output_path, index=False)

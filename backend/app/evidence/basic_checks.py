@@ -83,25 +83,13 @@ class BasicEvidenceEngine:
         evidence = []
         dt = self._estimate_dt(obs.timestamp)
 
-        # 1. Signal & Availability Check
         evidence.append(self._check_signal_availability(obs))
-
-        # 2. Satellite Consistency Check
         evidence.append(self._check_satellite_consistency(obs))
-
-        # 3. Motion Consistency Check
         evidence.append(self._check_motion_consistency(obs, dt))
-
-        # 4. Position Jump Check
         evidence.append(self._check_position_jump(obs, dt))
-
-        # 5. Time Consistency Check
         evidence.append(self._check_time_consistency(obs, dt))
-
-        # 6. Data Quality Check
         evidence.append(self._check_data_quality(obs))
 
-        # Update historical state
         self.prev_obs = obs
         self.prev_speed = obs.speed
 

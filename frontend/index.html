@@ -3,17 +3,249 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ASTRA — Navigation Trust & Integrity Layer</title>
-    <meta name="description" content="Software-based GNSS navigation integrity and physical consistency verification for autonomous systems." />
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <meta name="theme-color" content="#03070a" />
+    <meta name="description" content="ASTRA evaluates GNSS observations through engineering checks, physical consistency, anomaly detection and explainable trust decisions." />
+    <title>ASTRA — Trust, from orbit to action</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css?v=18" />
+    <link rel="stylesheet" href="landing-redesign.css?v=6" />
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div class="boot" id="boot" aria-live="polite">
+      <div class="boot__mark" aria-hidden="true"><i></i><i></i><span></span></div>
+      <div class="boot__copy"><span>Preparing navigation integrity</span><strong id="bootValue">00</strong></div>
+      <div class="boot__line"><i id="bootLine"></i></div>
+    </div>
+
+    <header class="topbar" id="topbar">
+      <a class="wordmark" href="#top" aria-label="ASTRA home">
+        <img src="assets/brand/astra-logo-navigation.png" alt="ASTRA" width="92" height="22" />
+        <span>TRUST LAYER</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#trust">System</a>
+        <a href="#proof">Architecture</a>
+        <a href="#deployment">Deployment</a>
+      </nav>
+      <a class="access-link" href="main.html">Open mission control <span>↗</span></a>
+    </header>
+
+    <main id="top">
+      <section class="orbit-story" id="orbitStory" aria-label="The journey from space to trusted navigation intelligence">
+        <div class="orbit-story__sticky">
+          <canvas id="orbitCanvas" aria-label="Scroll-controlled journey through the solar system, Earth orbit and satellite verification"></canvas>
+          <div class="film-shade" aria-hidden="true"></div>
+
+          <article class="story-copy story-copy--hero is-visible" data-start="0" data-end="0.145">
+            <p class="story-eyebrow">Navigation trust layer</p>
+            <h1>Trust begins<br />above.</h1>
+            <p>Validate the signal. Test the physics.<br />Trust the decision.</p>
+            <a class="hero-action" href="#trust">Discover ASTRA <span>↓</span></a>
+          </article>
+
+          <article class="story-copy story-copy--right" data-start="0.14" data-end="0.30">
+            <p class="story-eyebrow">Earth approach</p>
+            <h2>Before data becomes intelligence, it must prove where it came from.</h2>
+          </article>
+
+          <article class="story-copy" data-start="0.295" data-end="0.46">
+            <p class="story-eyebrow">Observation integrity</p>
+            <h2>One observation.<br />Multiple evidence layers.<br />One explainable decision.</h2>
+          </article>
+
+          <article class="story-copy story-copy--right" data-start="0.455" data-end="0.63">
+            <p class="story-eyebrow">Live telemetry</p>
+            <h2>Signals move at the speed of orbit. Physical verification moves with them.</h2>
+          </article>
+
+          <article class="story-copy" data-start="0.625" data-end="0.81">
+            <p class="story-eyebrow">The trust layer</p>
+            <h2>Evidence converges around every observation.</h2>
+          </article>
+
+          <article class="story-result" id="storyResult">
+            <p class="story-eyebrow">Decision ready</p>
+            <div class="story-result__score"><strong id="resultScore">98.4</strong><span>/ 100</span></div>
+            <h2>Verified for action.</h2>
+            <p>Every claim traced. Every check explained.</p>
+          </article>
+
+          <div class="scroll-cue" id="scrollCue"><span>Scroll to enter orbit</span><i></i></div>
+          <div class="story-progress"><i id="storyProgress"></i></div>
+        </div>
+      </section>
+
+      <section class="handoff" id="trust" aria-labelledby="handoff-title">
+        <div class="handoff__rail" aria-label="System handoff status">
+          <span><i></i>SEQUENCE COMPLETE</span>
+          <span>RECEIVER / RX-01</span>
+          <span>CHANNEL / GNSS-L1</span>
+          <span id="landingUtc">UTC / 12:13:29</span>
+        </div>
+        <div class="shell statement reveal">
+          <p class="category-label">01 / THE OPERATIONAL PROBLEM</p>
+          <div class="statement__grid">
+            <h2 id="handoff-title">A coordinate can be precise.<br /><span>And still be false.</span></h2>
+            <div class="statement__aside">
+              <p>Modern systems act on satellite-derived position, speed and time. ASTRA asks a more important question before they do:</p>
+              <strong>Can this observation be trusted?</strong>
+            </div>
+          </div>
+        </div>
+        <div class="shell anomaly-strip reveal" aria-label="Threat indicators">
+          <article><span>01</span><strong>Signal degradation</strong><small>Quality loss without malicious intent</small></article>
+          <article><span>02</span><strong>Position spoofing</strong><small>Convincing coordinates, impossible motion</small></article>
+          <article><span>03</span><strong>Replay / meaconing</strong><small>Valid data arriving at the wrong time</small></article>
+          <article><span>04</span><strong>Physics conflict</strong><small>Navigation claims that channels cannot support</small></article>
+        </div>
+      </section>
+
+      <section class="architecture" id="proof" aria-labelledby="architecture-title">
+        <div class="shell architecture__intro reveal">
+          <div>
+            <p class="category-label">02 / TRUST ARCHITECTURE</p>
+            <h2 id="architecture-title">Evidence before<br /><span>confidence.</span></h2>
+          </div>
+          <p>ASTRA sits between the receiver and the systems that depend on it—testing every observation against engineering limits, physical consistency and learned anomaly patterns.</p>
+        </div>
+
+        <div class="shell trust-flow reveal" id="trustFlow" aria-label="ASTRA evidence convergence architecture">
+          <div class="trust-flow__body">
+            <ol class="trust-streams" aria-label="Evidence inputs">
+              <li>
+                <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><path d="m8 19 5 5 11-11-5-5L8 19Zm5-8 8 8M6 23l3 3m10-20 3 3"/></svg>
+                <span>01</span><strong>SOURCE</strong><i aria-hidden="true"></i>
+              </li>
+              <li>
+                <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><ellipse cx="16" cy="16" rx="12" ry="6"/><ellipse cx="16" cy="16" rx="6" ry="12" transform="rotate(45 16 16)"/><ellipse cx="16" cy="16" rx="6" ry="12" transform="rotate(-45 16 16)"/><circle cx="16" cy="16" r="2"/></svg>
+                <span>02</span><strong>PHYSICS</strong><i aria-hidden="true"></i>
+              </li>
+              <li>
+                <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><circle cx="16" cy="5" r="3"/><circle cx="27" cy="16" r="3"/><circle cx="16" cy="27" r="3"/><circle cx="5" cy="16" r="3"/><path d="m14 7-7 7m11-7 7 7m0 4-7 7M7 18l7 7"/></svg>
+                <span>03</span><strong>ML</strong><i aria-hidden="true"></i>
+              </li>
+              <li>
+                <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect x="7" y="4" width="18" height="24" rx="2"/><path d="M11 10h10m-10 6h10m-10 6h6"/></svg>
+                <span>04</span><strong>FORENSICS</strong><i aria-hidden="true"></i>
+              </li>
+            </ol>
+
+            <svg class="trust-flow__paths" viewBox="0 0 1120 560" width="1120" height="560" preserveAspectRatio="none" aria-hidden="true">
+              <defs><linearGradient id="trustPath" x1="0" x2="1"><stop stop-color="#315f9e"/><stop offset=".58" stop-color="#8bc4ff"/><stop offset="1" stop-color="#315f9e"/></linearGradient></defs>
+              <path id="trustInputSource" class="trust-path trust-path--input" pathLength="1" d="M278 77C410 77 438 214 560 268"/>
+              <path id="trustInputPhysics" class="trust-path trust-path--input" pathLength="1" d="M278 212C420 212 452 248 560 276"/>
+              <path id="trustInputMl" class="trust-path trust-path--input" pathLength="1" d="M278 348C420 348 452 312 560 284"/>
+              <path id="trustInputForensics" class="trust-path trust-path--input" pathLength="1" d="M278 483C410 483 438 346 560 292"/>
+              <path id="trustOutputTrust" class="trust-path trust-path--output" pathLength="1" d="M748 280C820 280 846 230 930 222"/>
+              <path id="trustOutputEnables" class="trust-path trust-path--output" pathLength="1" d="M748 280H944"/>
+              <path id="trustOutputAction" class="trust-path trust-path--output" pathLength="1" d="M748 280C820 280 846 330 930 338"/>
+              <g class="trust-signals">
+                <circle class="trust-signal" r="3"><animateMotion path="M278 77C410 77 438 214 560 268" dur="3.4s" begin="-.4s" repeatCount="indefinite"/></circle>
+                <circle class="trust-signal" r="3"><animateMotion path="M278 212C420 212 452 248 560 276" dur="3.7s" begin="-1.8s" repeatCount="indefinite"/></circle>
+                <circle class="trust-signal" r="3"><animateMotion path="M278 348C420 348 452 312 560 284" dur="3.5s" begin="-2.7s" repeatCount="indefinite"/></circle>
+                <circle class="trust-signal" r="3"><animateMotion path="M278 483C410 483 438 346 560 292" dur="3.9s" begin="-1.1s" repeatCount="indefinite"/></circle>
+                <circle class="trust-signal trust-signal--output" r="2.6"><animateMotion path="M748 280C820 280 846 230 930 222" dur="3.5s" begin="-2.2s" repeatCount="indefinite"/></circle>
+                <circle class="trust-signal trust-signal--output" r="2.6"><animateMotion path="M748 280H944" dur="3.8s" begin="-.8s" repeatCount="indefinite"/></circle>
+                <circle class="trust-signal trust-signal--output" r="2.6"><animateMotion path="M748 280C820 280 846 330 930 338" dur="3.6s" begin="-3s" repeatCount="indefinite"/></circle>
+              </g>
+              <circle class="trust-junction" cx="748" cy="280" r="4"/>
+            </svg>
+
+            <div class="trust-core" aria-label="Composite trust score 98.4 out of 100, verified for action">
+              <div class="trust-core__rings">
+                <svg viewBox="0 0 240 240" width="240" height="240" aria-hidden="true">
+                  <circle class="trust-ring trust-ring--outer" cx="120" cy="120" r="112"/>
+                  <circle class="trust-ring trust-ring--track" cx="120" cy="120" r="94"/>
+                  <circle class="trust-ring trust-ring--progress" pathLength="100" cx="120" cy="120" r="94"/>
+                  <circle class="trust-ring trust-ring--inner" cx="120" cy="120" r="72"/>
+                </svg>
+                <div class="trust-core__value"><strong id="architectureScore">98.4</strong><small>VERIFIED FOR ACTION</small></div>
+                <i class="trust-orbit-node trust-orbit-node--1"></i><i class="trust-orbit-node trust-orbit-node--2"></i><i class="trust-orbit-node trust-orbit-node--3"></i>
+              </div>
+            </div>
+
+            <div class="trust-outcome" aria-label="Trust enables action">
+              <span>TRUST</span><span>ENABLES</span><span>ACTION</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="deployment" id="deployment" aria-labelledby="deployment-title">
+        <div class="shell deployment__intro reveal">
+          <p class="category-label">03 / RECEIVER-SIDE DEPLOYMENT</p>
+          <h2 id="deployment-title">Built for decisions<br /><span>made in motion.</span></h2>
+          <p>On a cargo vessel, ASTRA runs beside the navigation receiver—cross-checking GNSS against onboard context before trusted data reaches the bridge.</p>
+        </div>
+        <div class="shell earth-console reveal" id="earthConsole">
+          <header class="panel-bar"><span><i></i>VESSEL / ASTRA-RX-01</span><span>ARABIAN SEA&nbsp;&nbsp; 18.92° N / 72.83° E</span></header>
+          <figure class="earth-stage">
+            <img src="assets/visuals/earth-trust-route.png?v=2" alt="Earth horizon with a satellite-to-vessel trust route" width="1324" height="405" loading="lazy" decoding="async" />
+            <svg viewBox="0 0 1324 405" width="1324" height="405" preserveAspectRatio="none" aria-hidden="true">
+              <path id="earthRoute1" class="earth-route earth-route--1" pathLength="1" d="M183 302C282 297 390 255 478 231"/>
+              <path id="earthRoute2" class="earth-route earth-route--2" pathLength="1" d="M478 231C560 208 619 183 690 165"/>
+              <path id="earthRoute3" class="earth-route earth-route--3" pathLength="1" d="M690 165C792 183 876 224 949 273"/>
+              <path class="earth-current" pathLength="1" d="M183 302C282 297 390 255 478 231C560 208 619 183 690 165C792 183 876 224 949 273"/>
+              <path class="earth-scan" pathLength="1" d="M62 252C318 34 988 25 1248 246"/>
+              <circle class="earth-point earth-point--1" cx="183" cy="302" r="6"/>
+              <circle class="earth-point earth-point--2" cx="478" cy="231" r="6"/>
+              <circle class="earth-point earth-point--3" cx="690" cy="165" r="6"/>
+              <circle class="earth-point earth-point--4" cx="949" cy="273" r="6"/>
+              <circle class="earth-signal" r="3"><animateMotion dur="3.8s" repeatCount="indefinite"><mpath href="#earthRoute1"/></animateMotion></circle>
+              <circle class="earth-signal" r="3"><animateMotion dur="3.2s" begin=".7s" repeatCount="indefinite"><mpath href="#earthRoute2"/></animateMotion></circle>
+              <circle class="earth-signal earth-signal--delivery" r="3"><animateMotion dur="3.6s" begin="1.25s" repeatCount="indefinite"><mpath href="#earthRoute3"/></animateMotion></circle>
+            </svg>
+            <figcaption>Signals are checked at four operational checkpoints before reaching the vessel.</figcaption>
+          </figure>
+          <div class="deployment-flow" aria-label="Receiver-side trust flow">
+            <div><span>01 / INPUTS</span><strong>GNSS / AIS / IMU</strong><small>Independent navigation context</small></div>
+            <i aria-hidden="true">→</i>
+            <div class="deployment-flow__active"><span>02 / ASTRA</span><strong>VERIFY LOCALLY</strong><small>Analysis continues without internet</small></div>
+            <i aria-hidden="true">→</i>
+            <div><span>03 / OUTPUT</span><strong>BRIDGE / AUTOPILOT</strong><small>Trusted decision support</small></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scenarios" id="missions" aria-labelledby="scenarios-title">
+        <div class="shell scenarios__heading reveal">
+          <p class="category-label">04 / VALIDATION SCENARIOS</p>
+          <h2 id="scenarios-title">Test the system.<br /><span>Break the signal.</span></h2>
+          <p>Six deterministic missions expose ASTRA to degraded, manipulated and physically impossible navigation data.</p>
+        </div>
+        <div class="shell scenario-list reveal">
+          <article><span>01</span><strong>Normal navigation</strong><small>Healthy clear-sky baseline</small><em>TRUSTED</em></article>
+          <article><span>02</span><strong>GNSS degradation</strong><small>Urban canyon without false alarm</small><em>DEGRADED</em></article>
+          <article><span>03</span><strong>Sudden spoof</strong><small>Coordinate jump detection</small><em>SUSPICIOUS</em></article>
+          <article><span>04</span><strong>Gradual drift</strong><small>Stealth displacement accumulation</small><em>SUSPICIOUS</em></article>
+          <article><span>05</span><strong>Replay / meaconing</strong><small>Frozen time and stale Doppler</small><em>QUARANTINED</em></article>
+          <article><span>06</span><strong>Physical inconsistency</strong><small>Cross-channel residual detection</small><em>SUSPICIOUS</em></article>
+        </div>
+      </section>
+
+      <section class="closing" id="contact" aria-labelledby="closing-title">
+        <div class="closing__grid" aria-hidden="true"></div>
+        <div class="shell closing__layout">
+          <div class="closing__copy reveal">
+            <p class="category-label">MISSION CONTROL / READY</p>
+            <h2 id="closing-title">Know when to trust<br /><span>what comes from above.</span></h2>
+            <p>Move from simulated telemetry to explainable navigation decisions in the ASTRA operational console.</p>
+            <a class="closing__action" href="main.html">Open mission control <span>↗</span></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer" aria-label="Legal and contact information">
+      <nav class="footer__links" aria-label="Footer navigation">
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="#contact">Contact Us</a>
+      </nav>
+      <p class="footer__rights">© 2026 ASTRA. All rights reserved.</p>
+    </footer>
+    <noscript>This experience requires JavaScript to play the orbital sequence.</noscript>
+    <script defer src="script.js?v=23"></script>
   </body>
 </html>

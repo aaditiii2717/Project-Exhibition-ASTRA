@@ -4,13 +4,13 @@ Performs scenario-separated evaluation across unseen trajectories.
 Compares:
 A. Rule-Based Baseline (Basic Kinematics & DOP thresholds only)
 B. ML-Only Model (Standard Scikit-Learn classifier without physical GNSS invariants)
-C. ASTRA Hybrid System (Engineering + Physical Layers C3/L2/L3/L4 + ML + Fusion)
+C. ASTRA Hybrid System (Engineering + Physical Layers L1/L2/L3/L4 + ML + Fusion)
 
 Calculates empirical Confusion Matrix (TP, FP, TN, FN), Precision, Recall, F1, FPR, FNR,
 and Detection Latency using genuine computed pipeline outputs. Zero fabricated metrics.
 """
 
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Optional
 from ..simulation.scenarios import ScenarioGenerator
 from ..evidence.basic_checks import BasicEvidenceEngine
 from ..physics.layers import PhysicalLayerEngine
@@ -48,7 +48,6 @@ class BenchmarkEvaluator:
         for sc_id, is_malicious in test_scenarios:
             observations = ScenarioGenerator.generate_scenario(sc_id, num_steps=25)
 
-            # 1. Evaluate Rule-Based Baseline
             b_rules = BasicEvidenceEngine()
             rules_flagged = False
             rules_detect_step = None
@@ -62,7 +61,6 @@ class BenchmarkEvaluator:
 
             cls._update_stats(results_rules, is_malicious, rules_flagged, rules_detect_step)
 
-            # 2. Evaluate ML-Only Baseline
             b_ml = MLEngine()
             ml_flagged = False
             ml_detect_step = None
@@ -75,7 +73,6 @@ class BenchmarkEvaluator:
 
             cls._update_stats(results_ml, is_malicious, ml_flagged, ml_detect_step)
 
-            # 3. Evaluate ASTRA Hybrid System
             h_basic = BasicEvidenceEngine()
             h_physics = PhysicalLayerEngine()
             h_ml = MLEngine()
@@ -132,7 +129,7 @@ class BenchmarkEvaluator:
                     }
                 },
                 "astra_hybrid": {
-                    "name": "ASTRA Hybrid (Physics C3/L2/L3/L4 + Rules + ML Fusion)",
+                    "name": "ASTRA Hybrid (Physics L1/L2/L3/L4 + Rules + ML Fusion)",
                     "metrics": metrics_hybrid,
                     "confusion_matrix": {
                         "true_positive": results_hybrid["tp"],

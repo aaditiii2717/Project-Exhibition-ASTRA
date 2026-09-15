@@ -8,15 +8,17 @@ Provides chain integrity verification and live tamper-testing for hackathon demo
 
 import json
 import hashlib
+from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from ..core.schema import ForensicEvent, TrustState
 
 
 class ForensicMemory:
     GENESIS_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
+    DEFAULT_LEDGER_PATH = Path(__file__).resolve().parents[2] / "data" / "forensic_ledger.jsonl"
 
-    def __init__(self, file_path: str = "data/forensic_ledger.jsonl"):
-        self.file_path = file_path
+    def __init__(self, file_path: str | None = None):
+        self.file_path = str(file_path or self.DEFAULT_LEDGER_PATH)
         self.events: List[ForensicEvent] = []
         self.dataset_sha256: Optional[str] = None
         self._counter = 0

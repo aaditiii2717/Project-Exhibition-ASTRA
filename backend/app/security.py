@@ -22,7 +22,7 @@ class SecuritySettings:
 
     @classmethod
     def from_environment(cls) -> "SecuritySettings":
-        origins = [origin.strip() for origin in os.getenv("ASTRA_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if origin.strip()]
+        origins = [origin.strip() for origin in os.getenv("ASTRA_CORS_ORIGINS", "http://localhost:4174,http://127.0.0.1:4174,http://localhost:5173,http://127.0.0.1:5173").split(",") if origin.strip()]
         settings = cls(
             environment=os.getenv("ASTRA_ENV", "development"),
             api_key=os.getenv("ASTRA_API_KEY"),

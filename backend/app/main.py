@@ -6,10 +6,13 @@ simulation playback, forensic ledger auditing, and scientific evaluation benchma
 
 from fastapi import FastAPI, HTTPException, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, Any, List, Optional
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from typing import Dict, Any
 from pydantic import BaseModel
+from pathlib import Path
 
-from .core.schema import GNSSObservation, TrustResult, WhyTrustChanged, ForensicEvent, DatasetIntegrity
+from .core.schema import GNSSObservation, TrustResult, WhyTrustChanged, ForensicEvent
 from .gateway.sanitizer import InputGateway
 from .evidence.basic_checks import BasicEvidenceEngine
 from .physics.layers import PhysicalLayerEngine
@@ -83,8 +86,8 @@ class SingleStepAnalysisResponse(BaseModel):
     forensic_event: ForensicEvent
 
 
-@app.get("/")
-def read_root():
+@app.get("/api")
+def read_api_root():
     return {
         "product": "ASTRA Navigation Trust & Integrity Layer",
         "tagline": "Normal navigation asks: Where am I? ASTRA asks: Can I trust where I am?",
@@ -135,24 +138,19 @@ def analyze_single(payload: Dict[str, Any] = Body(...), stream_id: str = Depends
         if not is_valid or obs is None:
             raise HTTPException(status_code=422, detail={"message": "Telemetry rejected by secure input gateway", "errors": errors})
 
-        # 1. Basic Engineering Checks
         basic_items = pipeline.basic_engine.evaluate(obs)
 
-    # 2. Advanced Physical-Layer GNSS Checks (C3, L2, L3, L4 with availability gating)
+        # L1-L4 physical-layer checks with availability gating
         physics_items = pipeline.physics_engine.evaluate(obs)
 
-    # 3. Hybrid ML Anomaly Detection & Feature Attribution
         ml_item, ml_score, ml_top_features = pipeline.ml_engine.evaluate(obs, physics_items)
 
-    # Combine all evidence sources
         all_evidence = basic_items + physics_items + [ml_item]
 
-    # 4. Transparent Evidence Fusion
         trust_score, confidence, primary_reasons, recommended_action = pipeline.fusion_engine.fuse(
             all_evidence, ml_score, ml_top_features
         )
 
-    # 5. Decision Engine & "Why Did Trust Change?" Diff
         trust_result, why_changed = pipeline.decision_engine.decide(
             trust_score=trust_score,
             confidence=confidence,
@@ -163,7 +161,6 @@ def analyze_single(payload: Dict[str, Any] = Body(...), stream_id: str = Depends
             ml_top_features=ml_top_features
         )
 
-    # 6. Append to Tamper-Evident Forensic Memory
         triggered = [e.name for e in all_evidence if e.status in ["WARN", "FAIL"]]
         forensic_evt = pipeline.forensic_memory.record_event(
             timestamp=obs.timestamp,
@@ -199,6 +196,10 @@ def simulate_scenario(scenario_id: str, steps: int = 25):
     and forensic events for client-side replay and inspection.
     """
     observations = ScenarioGenerator.generate_scenario(scenario_id, num_steps=steps)
+
+    # Each scenario run starts its own clean ledger so unrelated runs never mix
+    # in the same forensic chain.
+    forensic_memory.reset(dataset_hash=f"SIMULATED::{scenario_id}")
 
     # Fresh pipeline instances for clean scenario execution
     b_eng = BasicEvidenceEngine()
@@ -249,7 +250,10 @@ def simulate_scenario(scenario_id: str, steps: int = 25):
     }
 
 
-@app.post("/api/ingest/text")
+MAX_INGEST_CONTENT_BYTES = 2 * 1024 * 1024  # 2 MB
+
+
+@app.post("/api/ingest/text", dependencies=[Depends(require_api_key)])
 def ingest_text_dataset(payload: Dict[str, str] = Body(...)):
     """
     Ingests raw CSV or NMEA text content, calculates SHA-256 hash, parses, validates, and runs pipeline.
@@ -259,6 +263,9 @@ def ingest_text_dataset(payload: Dict[str, str] = Body(...)):
 
     if not content.strip():
         raise HTTPException(status_code=400, detail="Empty content provided")
+
+    if len(content.encode("utf-8")) > MAX_INGEST_CONTENT_BYTES:
+        raise HTTPException(status_code=413, detail=f"Content exceeds the {MAX_INGEST_CONTENT_BYTES // (1024 * 1024)}MB ingest limit")
 
     sha256 = InputGateway.compute_sha256(content)
 
@@ -377,3 +384,49 @@ def reset_forensics():
 def get_evaluation_benchmark():
     """Runs scientific evaluation and returns comparative metrics across models."""
     return BenchmarkEvaluator.run_full_benchmark()
+
+
+# Unified frontend delivery. The landing page, Mission Control and API now share
+# one origin, while the explicit mounts keep backend and development files private.
+FRONTEND_ROOT = Path(__file__).resolve().parents[2] / "frontend"
+FRONTEND_FILES = frozenset({
+    "index.html",
+    "main.html",
+    "terms.html",
+    "styles.css",
+    "landing-redesign.css",
+    "tokens.css",
+    "script.js",
+    "support.js",
+    "threeui.bundle.js",
+    "favicon.svg",
+})
+
+app.mount("/assets", StaticFiles(directory=FRONTEND_ROOT / "assets"), name="assets")
+app.mount("/frames", StaticFiles(directory=FRONTEND_ROOT / "frames"), name="frames")
+app.mount("/frames-4k", StaticFiles(directory=FRONTEND_ROOT / "frames-4k"), name="frames-4k")
+app.mount("/src/shaders", StaticFiles(directory=FRONTEND_ROOT / "src" / "shaders"), name="shader-styles")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def serve_favicon():
+    return FileResponse(FRONTEND_ROOT / "favicon.svg", media_type="image/svg+xml")
+
+
+@app.get("/", include_in_schema=False)
+@app.get("/index.html", include_in_schema=False)
+def serve_landing_page():
+    return FileResponse(FRONTEND_ROOT / "index.html")
+
+
+@app.get("/mission-control", include_in_schema=False)
+@app.get("/main.html", include_in_schema=False)
+def serve_mission_control():
+    return FileResponse(FRONTEND_ROOT / "main.html")
+
+
+@app.get("/{filename}", include_in_schema=False)
+def serve_frontend_file(filename: str):
+    if filename not in FRONTEND_FILES:
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(FRONTEND_ROOT / filename)

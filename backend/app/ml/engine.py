@@ -8,7 +8,7 @@ ML does NOT override physical laws; it serves as one more vote in evidence fusio
 import numpy as np
 import os
 import joblib
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from ..core.schema import GNSSObservation, EvidenceItem, CheckStatus
 
@@ -126,7 +126,7 @@ class MLEngine:
         ])
         y_degraded = np.ones(n_samples // 2) * 1  # 1 = Degraded
 
-        # 3. Spoofed / Attack cluster (huge jumps, contradictory kinematics, exploding C3/L2 residuals)
+        # 3. Spoofed / Attack cluster (huge jumps, contradictory kinematics, exploding L1/L2 residuals)
         spoof_disp = np.random.uniform(80.0, 3000.0, n_samples // 2)
         spoof_spd = np.random.normal(15.0, 5.0, n_samples // 2)
         spoof_diff = np.abs(spoof_disp - spoof_spd)
@@ -211,7 +211,7 @@ class MLEngine:
 
         if physics_items:
             for item in physics_items:
-                if "C3" in item.name and item.value is not None:
+                if "L1" in item.name and item.value is not None:
                     c3_val = float(item.value)
                 elif "L2" in item.name and item.value is not None:
                     l2_val = float(item.value)
@@ -275,22 +275,20 @@ class MLEngine:
         feat_vec, feat_dict = self.extract_features(obs, physics_items)
         x_in = feat_vec.reshape(1, -1)
 
-        # 1. Isolation Forest Anomaly Score (normalized to 0.0 - 1.0)
+        # Isolation Forest anomaly score, normalized to [0.0, 1.0]
         # raw decision_function: positive = inlier, negative = outlier
         raw_iso = self.iso_forest.decision_function(x_in)[0]
         # Map raw [-0.3, 0.2] to [1.0, 0.0]
         iso_anomaly = max(0.0, min(1.0, (0.15 - raw_iso) / 0.35))
 
-        # 2. Random Forest probability of attack (class 2)
+        # Random Forest probability of attack (class 2 = spoofed)
         rf_probs = self.rf_classifier.predict_proba(x_in)[0]
-        p_nominal = rf_probs[0] if len(rf_probs) > 0 else 1.0
-        p_degraded = rf_probs[1] if len(rf_probs) > 1 else 0.0
         p_spoof = rf_probs[2] if len(rf_probs) > 2 else 0.0
 
         # Fused ML anomaly score: 60% RF spoof prob + 40% IsoForest
         fused_ml_score = round(float(0.6 * p_spoof + 0.4 * iso_anomaly), 3)
 
-        # 3. Explainability: Identify top 3 contributing features
+        # Explainability: identify top 3 contributing features
         rf_importances = self.rf_classifier.feature_importances_
         # Feature impact = feature value z-score-like contribution * tree importance
         contributions = {}
@@ -302,6 +300,10 @@ class MLEngine:
 
         # Sort top 3
         top_features = dict(sorted(contributions.items(), key=lambda x: x[1], reverse=True)[:3])
+        # Keep the approved artifact's legacy feature key internally, but expose the
+        # clearer public Layer L1 terminology in operator-facing explanations.
+        if "c3_residual_rms" in top_features:
+            top_features["l1_doppler_range_residual_rms"] = top_features.pop("c3_residual_rms")
 
         # Formulate status and explanation
         if fused_ml_score > 0.65:

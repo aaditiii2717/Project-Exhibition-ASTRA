@@ -6,7 +6,7 @@ Generates deterministic, high-fidelity synthetic GNSS trajectories across 6 dist
 3. Sudden Spoof (Instantaneous coordinate jump -> SUSPICIOUS / QUARANTINED)
 4. Gradual Drift (Stealthy ramp offset caught by baseline L3b and ML)
 5. Replay / Meaconing (Frozen timestamps, stale Doppler shifts)
-6. Physical-Layer Inconsistency (C3 and L2 residual explosion on raw channels)
+6. Physical-Layer Inconsistency (L1 and L2 residual explosion on raw channels)
 All generated data is clearly flagged as SIMULATED.
 """
 
@@ -70,9 +70,9 @@ class ScenarioGenerator:
                 "id": "physical_inconsistency",
                 "name": "6. Physical-Layer Inconsistency",
                 "category": "PHYSICAL INCONSISTENCY",
-                "description": "Raw pseudorange rates disagree with carrier Doppler shifts (C3 RMS > 18 m/s) and WLS position diverges (L2 RMS > 85 m).",
+                "description": "Raw pseudorange rates disagree with carrier Doppler shifts (L1 RMS > 18 m/s) and WLS position diverges (L2 RMS > 85 m).",
                 "expected_state": "QUARANTINED (8–15)",
-                "key_takeaway": "Advanced C3/L2/L4 physics expose synthetic multi-satellite RF generation."
+                "key_takeaway": "Advanced L1/L2/L4 physics expose synthetic multi-satellite RF generation."
             },
         ]
 
@@ -245,11 +245,11 @@ class ScenarioGenerator:
 
     @classmethod
     def _gen_physical_inconsistency(cls, n: int) -> List[GNSSObservation]:
-        """Physical inconsistency: C3 and L2 residuals explode starting step 8."""
+        """Physical inconsistency: L1 and L2 residuals explode starting step 8."""
         obs_list = cls._gen_normal(n)
         for i in range(8, n):
             # Desynchronize Doppler and pseudorange rates
-            # C3 residual = rho_dot + (c/f0)*fd != 0
+            # L1 Doppler–range residual = rho_dot + (c/f0)*fd != 0
             obs_list[i].pseudorange_rate = [180.0, -140.0, 210.0, -190.0]
             # Force Doppler to mismatch heavily (+1200 Hz discrepancy)
             obs_list[i].doppler = [-500.0, 400.0, -600.0, 550.0]

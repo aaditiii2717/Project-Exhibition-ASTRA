@@ -7,7 +7,7 @@ Computes:
 Initial heuristic weights are clearly marked as requiring empirical calibration.
 """
 
-from typing import List, Tuple, Dict, Any, Optional
+from typing import List, Tuple, Dict, Optional
 from ..core.schema import EvidenceItem, CheckStatus, TrustResult, TrustState
 
 
@@ -28,7 +28,7 @@ class FusionEngine:
         "Position Jump Check": 1.9,
         "Time Consistency": 1.1,
         "Data Quality": 0.7,
-        "Layer C3 — Cross-Rate Consistency": 1.7,
+        "Layer L1 — Doppler–Range Consistency": 1.7,
         "Layer L2 — Position Geometry Residual": 1.8,
         "Layer L3 — Trajectory Smoothness": 1.4,
         "Layer L4 — Relative Geometry": 1.5,
@@ -58,7 +58,7 @@ class FusionEngine:
         if num_available == 0:
             return 50.0, 10.0, ["Insufficient telemetry to establish trust"], "INCONCLUSIVE — Require manual verification"
 
-        # 1. Compute Trust Score (100 - aggregated weighted penalties)
+        # Trust score = 100 - aggregated weighted penalties
         total_weight = 0.0
         weighted_penalty = 0.0
         critical_failures = []
@@ -97,11 +97,10 @@ class FusionEngine:
 
         trust_score = round(max(0.0, min(100.0, raw_trust)), 1)
 
-        # 2. Compute Independent Confidence (0–100%)
-        # Confidence reflects:
-        # A) Evidence coverage: ratio of available checks vs total checks (40% weight)
-        # B) Evidence consensus: agreement among available indicators (40% weight)
-        # C) Signal geometry quality: absence of total signal blindness (20% weight)
+        # Independent confidence (0-100%), combining:
+        # - evidence coverage: ratio of available checks vs total checks (40% weight)
+        # - evidence consensus: agreement among available indicators (40% weight)
+        # - signal geometry quality: absence of total signal blindness (20% weight)
 
         coverage_ratio = num_available / max(1, total_checks)
 
@@ -125,7 +124,6 @@ class FusionEngine:
 
         confidence = round(max(5.0, min(99.0, raw_confidence)), 1)
 
-        # 3. Determine Primary Reasons & Recommended Action
         primary_reasons = []
         if critical_failures:
             primary_reasons.extend(critical_failures[:3])

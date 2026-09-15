@@ -1,7 +1,7 @@
 """
 ASTRA Advanced GNSS Physical-Layer Evidence Engine
 Implements the 4-layer physical integrity model:
-- Layer C3: Cross-Rate Consistency (Doppler vs Pseudorange-rate)
+- Layer L1: Doppler–Range Consistency (Doppler vs pseudorange-rate)
 - Layer L2: Position Geometry Residual (Iterative Least-Squares Pseudorange Solution)
 - Layer L3: Trajectory Smoothness (L3a Acceleration Consistency, L3b Baseline Drift)
 - Layer L4: Relative Geometry (Pairwise Single-Differenced Doppler Invariance)
@@ -12,7 +12,7 @@ the checks gracefully return UNAVAILABLE with an explanation. Values are NEVER f
 """
 
 import math
-from typing import List, Optional, Tuple, Dict, Any
+from typing import List, Optional, Tuple, Dict
 from ..core.schema import GNSSObservation, EvidenceItem, CheckStatus
 
 
@@ -58,16 +58,9 @@ class PhysicalLayerEngine:
         if self.baseline_origin is None:
             self.baseline_origin = (obs.latitude, obs.longitude, obs.altitude)
 
-        # 1. Layer C3: Cross-Rate Consistency
         items.append(self._check_c3_cross_rate(obs))
-
-        # 2. Layer L2: Position Geometry Residual
         items.append(self._check_l2_position_geometry(obs))
-
-        # 3. Layer L3: Trajectory Smoothness (L3a + L3b)
         items.append(self._check_l3_trajectory_smoothness(obs))
-
-        # 4. Layer L4: Relative Geometry
         items.append(self._check_l4_relative_geometry(obs, t_sec))
 
         self.prev_pseudoranges = obs.pseudorange
@@ -76,13 +69,13 @@ class PhysicalLayerEngine:
 
     def _check_c3_cross_rate(self, obs: GNSSObservation) -> EvidenceItem:
         """
-        Layer C3: Cross-rate consistency.
+        Layer L1: Doppler–range consistency.
         For satellite i: Δ_i = ρdot_i + (c / f0) * f_d,i ≈ 0
         """
         if (obs.pseudorange_rate is None or obs.doppler is None or
                 len(obs.pseudorange_rate) == 0 or len(obs.doppler) == 0):
             return EvidenceItem(
-                name="Layer C3 — Cross-Rate Consistency",
+                name="Layer L1 — Doppler–Range Consistency",
                 category="PHYSICAL",
                 value=None,
                 status=CheckStatus.UNAVAILABLE,
@@ -114,13 +107,13 @@ class PhysicalLayerEngine:
 
         if c3_rms > self.c3_rms_threshold_fail:
             return EvidenceItem(
-                name="Layer C3 — Cross-Rate Consistency",
+                name="Layer L1 — Doppler–Range Consistency",
                 category="PHYSICAL",
                 value=round(c3_rms, 3),
                 status=CheckStatus.FAIL,
                 severity=0.92,
                 explanation=(
-                    f"PHYSICAL INCONSISTENCY: C3 RMS residual elevated to {c3_rms:.2f} m/s (threshold: {self.c3_rms_threshold_fail} m/s). "
+                    f"PHYSICAL INCONSISTENCY: L1 Doppler–range RMS residual elevated to {c3_rms:.2f} m/s (threshold: {self.c3_rms_threshold_fail} m/s). "
                     f"Pseudorange rate contradicts Doppler frequency shift across {n} satellites. Characteristic of synthetic signal injection."
                 ),
                 formula="Δ_i = ρ̇_i + (c / f₀) · f_{d,i} ≈ 0",
@@ -131,12 +124,12 @@ class PhysicalLayerEngine:
             )
         elif c3_rms > self.c3_rms_threshold_warn:
             return EvidenceItem(
-                name="Layer C3 — Cross-Rate Consistency",
+                name="Layer L1 — Doppler–Range Consistency",
                 category="PHYSICAL",
                 value=round(c3_rms, 3),
                 status=CheckStatus.WARN,
                 severity=0.5,
-                explanation=f"Moderate C3 cross-rate discrepancy ({c3_rms:.2f} m/s). Possible ionospheric scintillation or multipath reflection.",
+                explanation=f"Moderate L1 Doppler–range discrepancy ({c3_rms:.2f} m/s). Possible ionospheric scintillation or multipath reflection.",
                 formula="Δ_i = ρ̇_i + (c / f₀) · f_{d,i} ≈ 0",
                 threshold=f"RMS <= {self.c3_rms_threshold_warn} m/s",
                 threshold_type="DEMO THRESHOLD",
@@ -145,7 +138,7 @@ class PhysicalLayerEngine:
             )
         else:
             return EvidenceItem(
-                name="Layer C3 — Cross-Rate Consistency",
+                name="Layer L1 — Doppler–Range Consistency",
                 category="PHYSICAL",
                 value=round(c3_rms, 3),
                 status=CheckStatus.PASS,

@@ -5,7 +5,7 @@ Generates operational recommendations and creates the signature "Why Did Trust C
 ASTRA is a decision-support layer; it provides integrity guarantees to higher-level autopilots without direct vehicle actuation.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, List, Tuple
 from ..core.schema import TrustState, TrustResult, WhyTrustChanged, EvidenceItem, CheckStatus
 
 
@@ -41,7 +41,6 @@ class DecisionEngine:
         """
         Calculates the definitive Trust State and computes "Why Did Trust Change?" diff against previous step.
         """
-        # 1. State determination
         if confidence < self.inconclusive_confidence_min:
             trust_state = TrustState.INCONCLUSIVE
             recommended_action = "INCONCLUSIVE — Low confidence in telemetry; seek independent ground-truth verification."
@@ -65,7 +64,6 @@ class DecisionEngine:
             ml_top_features=ml_top_features
         )
 
-        # 2. Compute "Why Did Trust Change?" diagnostic diff
         why_changed = self._compute_why_changed(self.previous_result, current_result)
 
         self.previous_result = current_result
