@@ -10,7 +10,7 @@
     <link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="assets/fonts/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="styles.css?v=18" />
-    <link rel="stylesheet" href="landing-redesign.css?v=6" />
+    <link rel="stylesheet" href="landing-redesign.css?v=7" />
   </head>
   <body>
     <div class="boot" id="boot" aria-live="polite">
@@ -82,7 +82,7 @@
           <span><i></i>SEQUENCE COMPLETE</span>
           <span>RECEIVER / RX-01</span>
           <span>CHANNEL / GNSS-L1</span>
-          <span id="landingUtc">UTC / 12:13:29</span>
+          <span data-utc-clock>UTC / 12:13:29</span>
         </div>
         <div class="shell statement reveal">
           <p class="category-label">01 / THE OPERATIONAL PROBLEM</p>
@@ -238,14 +238,40 @@
       </section>
     </main>
 
-    <footer class="footer" aria-label="Legal and contact information">
-      <nav class="footer__links" aria-label="Footer navigation">
-        <a href="terms.html">Terms &amp; Conditions</a>
-        <a href="#contact">Contact Us</a>
-      </nav>
-      <p class="footer__rights">© 2026 ASTRA. All rights reserved.</p>
+    <footer class="footer" aria-label="ASTRA mission control footer">
+      <div class="footer__primary">
+        <div class="footer__identity">
+          <img src="assets/brand/astra-logo-navigation.png" alt="ASTRA" width="92" height="22" />
+          <div>
+            <strong>Navigation Trust &amp; Integrity Layer</strong>
+            <span>Evidence-led GNSS decision support</span>
+          </div>
+        </div>
+        <div class="footer__status" aria-label="Demo environment status: ready">
+          <i aria-hidden="true"></i>
+          <span>Demo environment</span>
+          <strong>Ready</strong>
+        </div>
+        <a class="footer__dashboard" href="main.html">
+          <span>Open Mission Control</span><b aria-hidden="true">&rarr;</b>
+        </a>
+      </div>
+      <div class="footer__secondary">
+        <nav class="footer__links" aria-label="Footer navigation">
+          <a href="#trust">System</a>
+          <a href="#proof">Architecture</a>
+          <a href="#missions">Scenarios</a>
+          <a href="#contact">Contact</a>
+          <a href="terms.html">Terms</a>
+        </nav>
+        <div class="footer__telemetry" aria-label="Footer telemetry">
+          <span data-utc-clock>UTC / 12:13:29</span>
+          <span>BUILD / DEMO-01</span>
+          <span>&copy; <span data-current-year>2026</span> ASTRA</span>
+        </div>
+      </div>
     </footer>
     <noscript>This experience requires JavaScript to play the orbital sequence.</noscript>
-    <script defer src="script.js?v=23"></script>
+    <script defer src="script.js?v=24"></script>
   </body>
 </html>

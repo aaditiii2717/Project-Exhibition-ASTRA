@@ -384,10 +384,16 @@
       }
     }
 
-    const utc = document.getElementById("landingUtc");
+    const utcClocks = document.querySelectorAll("[data-utc-clock]");
+    const currentYears = document.querySelectorAll("[data-current-year]");
     const updateUtc = () => {
-      if (!utc) return;
-      utc.textContent = `UTC / ${new Date().toISOString().slice(11, 19)}`;
+      const now = new Date();
+      utcClocks.forEach((clock) => {
+        clock.textContent = `UTC / ${now.toISOString().slice(11, 19)}`;
+      });
+      currentYears.forEach((year) => {
+        year.textContent = String(now.getUTCFullYear());
+      });
     };
     updateUtc();
     window.setInterval(updateUtc, 1000);
