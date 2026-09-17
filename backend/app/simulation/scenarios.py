@@ -12,7 +12,7 @@ All generated data is clearly flagged as SIMULATED.
 
 import math
 import numpy as np
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from ..core.schema import GNSSObservation
 
 
@@ -77,25 +77,38 @@ class ScenarioGenerator:
         ]
 
     @classmethod
-    def generate_scenario(cls, scenario_id: str, num_steps: int = 30) -> List[GNSSObservation]:
-        """Generates deterministic sequence of GNSSObservations."""
+    def generate_scenario(
+        cls,
+        scenario_id: str,
+        num_steps: int = 30,
+        rng: Optional[np.random.Generator] = None,
+        attack_scale: float = 1.0,
+    ) -> List[GNSSObservation]:
+        """
+        Generates a sequence of GNSSObservations. With rng=None (the default used
+        by the live simulation/playback endpoints), output is fully deterministic.
+        Passing an rng enables sensor-noise jitter and randomized attack severity
+        (via attack_scale), used by BenchmarkEvaluator so scored trials aren't a
+        tautological replay of the exact fixtures the physics thresholds were
+        tuned against.
+        """
         if scenario_id == "normal_nav":
-            return cls._gen_normal(num_steps)
+            return cls._gen_normal(num_steps, rng=rng)
         elif scenario_id == "gnss_degradation":
-            return cls._gen_degraded(num_steps)
+            return cls._gen_degraded(num_steps, rng=rng, attack_scale=attack_scale)
         elif scenario_id == "sudden_spoof":
-            return cls._gen_sudden_spoof(num_steps)
+            return cls._gen_sudden_spoof(num_steps, rng=rng, attack_scale=attack_scale)
         elif scenario_id == "gradual_drift":
-            return cls._gen_gradual_drift(num_steps)
+            return cls._gen_gradual_drift(num_steps, rng=rng, attack_scale=attack_scale)
         elif scenario_id == "replay_meaconing":
-            return cls._gen_replay(num_steps)
+            return cls._gen_replay(num_steps, rng=rng, attack_scale=attack_scale)
         elif scenario_id == "physical_inconsistency":
-            return cls._gen_physical_inconsistency(num_steps)
+            return cls._gen_physical_inconsistency(num_steps, rng=rng, attack_scale=attack_scale)
         else:
-            return cls._gen_normal(num_steps)
+            return cls._gen_normal(num_steps, rng=rng)
 
     @classmethod
-    def _gen_normal(cls, n: int) -> List[GNSSObservation]:
+    def _gen_normal(cls, n: int, rng: Optional[np.random.Generator] = None) -> List[GNSSObservation]:
         obs_list = []
         lat = cls.BASE_LAT
         lon = cls.BASE_LON
@@ -122,11 +135,19 @@ class ScenarioGenerator:
 
         for i in range(n):
             # Advance lat/lon naturally at 12 m/s
-            dist_m = speed * 1.0
+            step_speed = speed
+            if rng is not None:
+                # Realistic receiver-noise jitter, well inside rule/physics tolerances,
+                # so benchmark trials vary run-to-run instead of replaying identical fixtures.
+                step_speed = max(0.0, speed + rng.normal(0.0, 0.2))
+            dist_m = step_speed * 1.0
             dlat = (dist_m * math.cos(math.radians(heading))) / 111320.0
             dlon = (dist_m * math.sin(math.radians(heading))) / (111320.0 * math.cos(math.radians(lat)))
             lat += dlat
             lon += dlon
+            if rng is not None:
+                lat += rng.normal(0.0, 0.8) / 111320.0
+                lon += rng.normal(0.0, 0.8) / (111320.0 * math.cos(math.radians(lat)))
             alt = cls.BASE_ALT + (i * 0.1)
 
             # Exact ECEF receiver coordinates
@@ -169,7 +190,7 @@ class ScenarioGenerator:
                 latitude=round(lat, 6),
                 longitude=round(lon, 6),
                 altitude=round(alt, 2),
-                speed=speed,
+                speed=step_speed,
                 heading=heading,
                 satellite_count=10,
                 fix_quality=1,
@@ -188,17 +209,19 @@ class ScenarioGenerator:
         return obs_list
 
     @classmethod
-    def _gen_degraded(cls, n: int) -> List[GNSSObservation]:
+    def _gen_degraded(
+        cls, n: int, rng: Optional[np.random.Generator] = None, attack_scale: float = 1.0
+    ) -> List[GNSSObservation]:
         """Degraded GNSS: Drops satellite count and inflates HDOP without malicious jump."""
-        obs_list = cls._gen_normal(n)
+        obs_list = cls._gen_normal(n, rng=rng)
         for i in range(10, n):
             # Enters urban canyon at step 10
             obs_list[i].satellite_count = 5
-            obs_list[i].hdop = 4.2
-            obs_list[i].vdop = 5.8
-            obs_list[i].pdop = 7.1
+            obs_list[i].hdop = 4.2 * attack_scale
+            obs_list[i].vdop = 5.8 * attack_scale
+            obs_list[i].pdop = 7.1 * attack_scale
             # Add realistic multipath noise ramp (1.5m jitter)
-            jitter_m = math.sin((i - 10) * 0.4) * 2.0
+            jitter_m = math.sin((i - 10) * 0.4) * 2.0 * attack_scale
             dlat = jitter_m / 111320.0
             obs_list[i].latitude += dlat
             # Reduce CN0 (signal attenuation under tall glass facades)
@@ -206,33 +229,41 @@ class ScenarioGenerator:
         return obs_list
 
     @classmethod
-    def _gen_sudden_spoof(cls, n: int) -> List[GNSSObservation]:
-        """Sudden spoof: Step 12 hops 3.8 km away instantly."""
-        obs_list = cls._gen_normal(n)
+    def _gen_sudden_spoof(
+        cls, n: int, rng: Optional[np.random.Generator] = None, attack_scale: float = 1.0
+    ) -> List[GNSSObservation]:
+        """Sudden spoof: Step 12 hops away instantly (nominally ~3.8 km, scaled by attack_scale)."""
+        obs_list = cls._gen_normal(n, rng=rng)
         for i in range(12, n):
-            # Sudden 3.8 km offset to North-East
-            obs_list[i].latitude += 0.034  # ~3.8 km jump
-            obs_list[i].longitude += 0.025
-            # Reported speed remains 12 m/s (creating huge discrepancy with displacement)
+            # Sudden offset to North-East, scaled so benchmark trials can probe
+            # near the motion-consistency threshold rather than always being an
+            # unmissably large jump.
+            obs_list[i].latitude += 0.034 * attack_scale
+            obs_list[i].longitude += 0.025 * attack_scale
+            # Reported speed remains ~12 m/s (creating a discrepancy with displacement)
             obs_list[i].speed = 12.0
         return obs_list
 
     @classmethod
-    def _gen_gradual_drift(cls, n: int) -> List[GNSSObservation]:
+    def _gen_gradual_drift(
+        cls, n: int, rng: Optional[np.random.Generator] = None, attack_scale: float = 1.0
+    ) -> List[GNSSObservation]:
         """Gradual drift: Stealth ramp acceleration bias from step 8 onward."""
-        obs_list = cls._gen_normal(n)
+        obs_list = cls._gen_normal(n, rng=rng)
         accumulated_drift_m = 0.0
         for i in range(8, n):
-            drift_step = (i - 7) * 2.5  # quadratic ramp
+            drift_step = (i - 7) * 2.5 * attack_scale  # quadratic ramp
             accumulated_drift_m += drift_step
             dlat = accumulated_drift_m / 111320.0
             obs_list[i].latitude += dlat
         return obs_list
 
     @classmethod
-    def _gen_replay(cls, n: int) -> List[GNSSObservation]:
+    def _gen_replay(
+        cls, n: int, rng: Optional[np.random.Generator] = None, attack_scale: float = 1.0
+    ) -> List[GNSSObservation]:
         """Replay attack: Frozen timestamps and repeating positions at step 10."""
-        obs_list = cls._gen_normal(n)
+        obs_list = cls._gen_normal(n, rng=rng)
         frozen_lat = obs_list[9].latitude
         frozen_lon = obs_list[9].longitude
         frozen_ts = obs_list[9].timestamp
@@ -244,15 +275,19 @@ class ScenarioGenerator:
         return obs_list
 
     @classmethod
-    def _gen_physical_inconsistency(cls, n: int) -> List[GNSSObservation]:
+    def _gen_physical_inconsistency(
+        cls, n: int, rng: Optional[np.random.Generator] = None, attack_scale: float = 1.0
+    ) -> List[GNSSObservation]:
         """Physical inconsistency: L1 and L2 residuals explode starting step 8."""
-        obs_list = cls._gen_normal(n)
+        obs_list = cls._gen_normal(n, rng=rng)
         for i in range(8, n):
-            # Desynchronize Doppler and pseudorange rates
-            # L1 Doppler–range residual = rho_dot + (c/f0)*fd != 0
-            obs_list[i].pseudorange_rate = [180.0, -140.0, 210.0, -190.0]
-            # Force Doppler to mismatch heavily (+1200 Hz discrepancy)
-            obs_list[i].doppler = [-500.0, 400.0, -600.0, 550.0]
+            # Desynchronize Doppler and pseudorange rates, scaled by attack_scale
+            # (L1 Doppler-range residual = rho_dot + (c/f0)*fd != 0)
+            obs_list[i].pseudorange_rate = [v * attack_scale for v in [180.0, -140.0, 210.0, -190.0]]
+            # Force Doppler to mismatch, scaled by attack_scale
+            obs_list[i].doppler = [v * attack_scale for v in [-500.0, 400.0, -600.0, 550.0]]
             # Pseudoranges diverging from geometric satellite positions
-            obs_list[i].pseudorange = [p + 450.0 * (k + 1) for k, p in enumerate(obs_list[i].pseudorange)]
+            obs_list[i].pseudorange = [
+                p + 450.0 * attack_scale * (k + 1) for k, p in enumerate(obs_list[i].pseudorange)
+            ]
         return obs_list

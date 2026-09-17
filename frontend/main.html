@@ -3,43 +3,60 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./auth-guard.js"></script>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="./assets/vendor/leaflet/leaflet.css">
 <script src="./assets/vendor/leaflet/leaflet.js"></script>
 <script src="./threeui.bundle.js?v=8" defer></script>
 <link rel="stylesheet" href="./src/shaders/threeui.css">
+<link rel="stylesheet" href="./mission-control.css?v=11">
 </head>
 <body>
 <div id="nebulaMount" class="mission-nebula" aria-hidden="true"></div>
 <x-dc>
 <helmet>
 <style>
-@font-face{font-family:"Instrument Sans";src:url("assets/fonts/instrument-sans-latin.woff2") format("woff2");font-display:swap;font-weight:400 700}
-@font-face{font-family:"Inter";src:url("assets/fonts/inter-latin.woff2") format("woff2");font-display:swap;font-weight:100 900}
-@font-face{font-family:"IBM Plex Mono";src:url("assets/fonts/ibm-plex-mono-400-latin.woff2") format("woff2");font-display:swap;font-weight:400}
-@font-face{font-family:"IBM Plex Mono";src:url("assets/fonts/ibm-plex-mono-500-latin.woff2") format("woff2");font-display:swap;font-weight:500}
-body{margin:0;background:#030609;-webkit-font-smoothing:antialiased}
-a{color:#96c0fb}
-a:hover{color:#73aaf8}
-input[type=range]{-webkit-appearance:none;background:transparent}
-input[type=range]::-webkit-slider-runnable-track{height:3px;background:rgba(32,55,67,.14);border-radius:3px}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#5795f5;border:2px solid #73aaf8;margin-top:-4.5px}
+@font-face{font-family:"Geist";src:url("assets/fonts/geist-400.woff2") format("woff2");font-display:swap;font-weight:400;font-style:normal}
+@font-face{font-family:"Geist";src:url("assets/fonts/geist-500.woff2") format("woff2");font-display:swap;font-weight:500;font-style:normal}
+@font-face{font-family:"Geist";src:url("assets/fonts/geist-600.woff2") format("woff2");font-display:swap;font-weight:600;font-style:normal}
+@font-face{font-family:"Geist Mono";src:url("assets/fonts/geist-mono-400.woff2") format("woff2");font-display:swap;font-weight:400;font-style:normal}
+@font-face{font-family:"Geist Mono";src:url("assets/fonts/geist-mono-500.woff2") format("woff2");font-display:swap;font-weight:500;font-style:normal}
+/* Design tokens. Ground stays dark on purpose: the nebula backdrop blends with
+   mix-blend-mode:screen, so a lighter ground washes it out entirely. */
+:root{
+  --ground:#020617;      --card:#141C2E;        --muted-surface:#272F42;
+  --hairline:#2A3448;    --border-strong:#64748B;
+  --fg:#F8FAFC;          --fg-muted:#94A3B8;    --fg-dim:#CBD5E1;
+  --accent:#E2E8F0;      --on-accent:#020617;   --accent-hover:#FFFFFF;
+  --trusted:#22C55E;     --degraded:#FACC15;    --suspicious:#FB923C;
+  --quarantined:#F87171; --inconclusive:#94A3B8;
+  --r-control:4px;       --r-panel:8px;         --r-pill:999px;
+  --display:"Geist",ui-sans-serif,system-ui,sans-serif;
+  --text:"Geist",ui-sans-serif,system-ui,sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,monospace;
+}
+body{margin:0;background:var(--ground);-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+a:hover{color:var(--accent-hover)}
+input[type=range]{-webkit-appearance:none;background:transparent;height:24px;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--hairline);border-radius:3px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid var(--accent-hover);margin-top:-5px}
 .mission-nebula{position:fixed;inset:0;z-index:1;overflow:hidden;background:transparent;pointer-events:none;opacity:.38;mix-blend-mode:screen;filter:hue-rotate(-24deg) saturate(.72) brightness(.72)}
 .mission-nebula::after{position:absolute;inset:0;content:"";background:radial-gradient(ellipse at 62% 40%,transparent 18%,rgba(3,6,9,.2) 62%,rgba(3,6,9,.72) 100%);pointer-events:none}
 .mission-nebula .shader-frame,.mission-nebula .threeui-background,.mission-nebula iframe{width:100%;height:100%;display:block}
-#missionControlShell{position:relative;background:#030609!important}
+#missionControlShell{position:relative;background:var(--ground)!important}
 #missionControlShell>aside,#missionControlShell>div{position:relative;z-index:2}
 @media (prefers-reduced-motion:reduce){.mission-nebula{opacity:.28}}
 .astra-map-shell{position:relative;overflow:hidden;border-radius:8px;background:#060d13;isolation:isolate}
 #astraTrajectoryMap{position:absolute;z-index:1;inset:0;width:100%;height:100%;background:#060d13}
-.leaflet-container{font-family:'Inter',ui-sans-serif,sans-serif;background:#060d13}
+.leaflet-container{font-family:"Geist",ui-sans-serif,sans-serif;background:#060d13}
 .leaflet-tile-pane{filter:saturate(.75) brightness(.65) hue-rotate(178deg) contrast(1.08)}
 .leaflet-overlay-pane{mix-blend-mode:screen}
-.leaflet-control-attribution{max-width:170px!important;padding:2px 5px!important;background:rgba(3,6,9,.72)!important;color:#71858f!important;font:6px/1.25 'IBM Plex Mono',monospace!important}
-.leaflet-control-attribution a{color:#96c0fb!important}
+.leaflet-control-attribution{max-width:170px!important;padding:2px 5px!important;background:rgba(3,6,9,.72)!important;color:#71858f!important;font:11px/1.25 "Geist Mono",ui-monospace,monospace!important}
+.leaflet-control-attribution a{color:#94A3B8!important}
 .leaflet-bar{border:1px solid rgba(32,55,67,.24)!important;box-shadow:none!important}
 .leaflet-bar a{width:24px!important;height:24px!important;line-height:23px!important;border:0!important;border-bottom:1px solid rgba(32,55,67,.16)!important;background:rgba(11,20,27,.9)!important;color:#b7c6cd!important}
-.leaflet-tooltip{border:1px solid rgba(32,55,67,.24)!important;border-radius:6px!important;background:#0b141b!important;color:#b7c6cd!important;box-shadow:none!important;font:8px/1.4 'IBM Plex Mono',monospace!important}
+.leaflet-tooltip{border:1px solid rgba(32,55,67,.24)!important;border-radius:6px!important;background:#0b141b!important;color:#b7c6cd!important;box-shadow:none!important;font:11px/1.4 "Geist Mono",ui-monospace,monospace!important}
 .leaflet-tooltip::before{border-top-color:#0b141b!important}
 .astra-vehicle-marker{background:none!important;border:0!important}
 .astra-vehicle-marker>span{position:relative;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--vehicle-color);background:rgba(11,20,27,.7)}
@@ -47,100 +64,92 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .astra-vehicle-marker i{width:5px;height:5px;border-radius:50%;background:var(--vehicle-color);box-shadow:0 0 10px var(--vehicle-color)}
 @keyframes astraPulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
 .astra-map-toolbar{position:absolute;z-index:5;left:8px;top:8px;display:flex;gap:5px}
-.astra-map-readout{position:absolute;z-index:5;right:8px;top:8px;padding:5px 8px;border-radius:6px;border:1px solid rgba(32,55,67,.24);background:rgba(3,6,9,.72);backdrop-filter:blur(6px);color:#b7c6cd;font:7px/1.5 'IBM Plex Mono',monospace;text-align:right}
-.astra-map-shell.is-offline::after{content:"MAP TILES UNAVAILABLE";position:absolute;inset:auto 8px 8px auto;padding:3px 7px;border-radius:4px;background:rgba(229,106,114,.16);border:1px solid rgba(229,106,114,.4);color:#e56a72;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;z-index:6}
+.astra-map-readout{position:absolute;z-index:5;right:8px;top:8px;padding:5px 8px;border-radius:6px;border:1px solid rgba(32,55,67,.24);background:rgba(3,6,9,.72);backdrop-filter:blur(6px);color:#b7c6cd;font:11px/1.5 "Geist Mono",ui-monospace,monospace;text-align:right}
+.astra-map-shell.is-offline::after{content:"MAP TILES UNAVAILABLE";position:absolute;inset:auto 8px 8px auto;padding:3px 7px;border-radius:4px;background:rgba(229,106,114,.16);border:1px solid rgba(229,106,114,.4);color:#e56a72;font:11px/1 "Geist Mono",ui-monospace,monospace;letter-spacing:.06em;z-index:6}
 @media (prefers-reduced-motion:reduce){.astra-vehicle-marker>span::before{animation:none}}
 </style>
 </helmet>
 
-<div id="missionControlShell" style="font-family:'Inter',ui-sans-serif,sans-serif;background:#030609;height:100vh;color:#dbe5e9;display:grid;grid-template-columns:210px minmax(0,1fr)">
+<div id="missionControlShell" style="font-family:var(--text);background:var(--ground);height:100vh;color:var(--fg);display:grid;grid-template-columns:210px minmax(0,1fr)">
 
-  <aside style="border-right:1px solid rgba(32,55,67,.12);background:#030609;display:flex;flex-direction:column;height:100vh;overflow-y:auto">
-    <div style="height:62px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid rgba(32,55,67,.12)">
+  <aside style="border-right:1px solid var(--hairline);background:var(--ground);display:flex;flex-direction:column;height:100vh;overflow-y:auto">
+    <div style="height:62px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--hairline)">
       <img src="assets/brand/astra-logo-navigation.png" alt="ASTRA" style="height:22px;width:auto;object-fit:contain" />
-      <small style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.14em">MISSION CONTROL</small>
+      <small class="label-micro" style="letter-spacing:.1em;white-space:nowrap">MISSION&nbsp;CONTROL</small>
     </div>
 
-    <div style="padding:16px 18px;border-bottom:1px solid rgba(32,55,67,.12);display:flex;flex-direction:column;gap:3px">
-      <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">WORKSPACE</span>
-      <strong style="font-size:11px;font-weight:500">Navigation integrity</strong>
-      <small style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">LEO / RECEIVER 01</small>
+    <div style="padding:16px 18px;border-bottom:1px solid var(--hairline);display:flex;flex-direction:column;gap:3px">
+      <span class="label-micro">WORKSPACE</span>
+      <strong style="font-size:13px;font-weight:500">Navigation integrity</strong>
+      <small class="label-micro">NavIC / RECEIVER 01</small>
     </div>
 
     <nav style="display:flex;flex-direction:column;gap:2px;padding:10px">
       <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
-        <button onClick="{{ item.onClick }}" style="{{ item.style }}">
-          <span style="{{ item.dotStyle }}"></span>
+        <button onClick="{{ item.onClick }}" class="{{ item.className }}">
+          <span class="nav-item__dot"></span>
           <span>{{ item.label }}</span>
           <sc-if value="{{ item.badge }}" hint-placeholder-val="{{ false }}">
-            <span style="margin-left:auto;padding:1px 5px;border-radius:8px;background:#e56a72;color:#030609;font:8px/1.3 'IBM Plex Mono',monospace;font-weight:600">{{ item.badge }}</span>
+            <span class="nav-item__badge" role="status" aria-atomic="true" aria-label="{{ item.badgeLabel }}">{{ item.badge }}</span>
           </sc-if>
         </button>
       </sc-for>
     </nav>
 
-    <div style="margin-top:auto;padding:14px 16px;border-top:1px solid rgba(32,55,67,.12);display:flex;align-items:center;gap:8px">
+    <div style="margin-top:auto;padding:14px 16px;border-top:1px solid var(--hairline);display:flex;align-items:center;gap:8px">
       <span style="width:6px;height:6px;border-radius:50%;background:{{ connectionColor }};box-shadow:0 0 12px {{ connectionColor }}"></span>
-      <strong style="color:#b7c6cd;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">{{ connectionLabel }}</strong>
+      <strong class="label-micro">{{ connectionLabel }}</strong>
     </div>
   </aside>
 
   <div style="min-width:0;display:flex;flex-direction:column">
-    <header style="height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid rgba(32,55,67,.12);background:#030609;flex:none">
+    <header style="height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--hairline);background:var(--ground);flex:none">
       <div style="display:flex;align-items:center;gap:10px">
-        <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em">ASTRA / TRUST LAYER</span>
-        <i style="width:14px;height:1px;background:rgba(32,55,67,.24)"></i>
-        <strong style="color:#b7c6cd;font-size:11px;font-weight:500">{{ pageTitle }}</strong>
+        <span class="label-micro">ASTRA / TRUST LAYER</span>
+        <i style="width:14px;height:1px;background:var(--border-strong)"></i>
+        <strong style="color:var(--fg-muted);font-size:13px;font-weight:500">{{ pageTitle }}</strong>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
-        <span style="padding:5px 9px;border:1px solid rgba(32,55,67,.16);border-radius:30px;background:rgba(32,55,67,.04);color:#b7c6cd;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">{{ sourceLabel }}</span>
-        <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">UTC {{ utcLabel }}</span>
-        <div style="display:flex;border:1px solid rgba(32,55,67,.14);border-radius:20px;padding:2px">
-          <button onClick="{{ onSetOperatorMode }}" style="{{ operatorModeStyle }}">Operator</button>
-          <button onClick="{{ onSetForensicMode }}" style="{{ forensicModeStyle }}">Forensic</button>
+        <span id="astraUtcClock" class="label-micro" data-dc-stable="utcClock">UTC {{ utcLabel }}</span>
+        <div class="seg">
+          <button onClick="{{ onSetOperatorMode }}" class="{{ operatorModeClass }}">Operator</button>
+          <button onClick="{{ onSetForensicMode }}" class="{{ forensicModeClass }}">Investigator</button>
         </div>
-        <div style="position:relative">
-          <button onClick="{{ onToggleHelp }}" style="height:28px;padding:0 12px;border-radius:6px;border:1px solid rgba(32,55,67,.14);background:transparent;color:#b7c6cd;font-size:10px;cursor:pointer">Help ↓</button>
-          <sc-if value="{{ helpOpen }}" hint-placeholder-val="{{ false }}">
-            <div style="position:absolute;top:34px;right:0;width:160px;border:1px solid rgba(32,55,67,.16);border-radius:8px;background:#0b141b;padding:6px;display:flex;flex-direction:column;gap:2px;z-index:20">
-              <button onClick="{{ onOpenGuide }}" style="height:30px;border:none;background:transparent;color:#b7c6cd;font-size:10px;text-align:left;padding:0 8px;border-radius:5px;cursor:pointer;font-family:inherit">Demo guide</button>
-              <button onClick="{{ onOpenMethod }}" style="height:30px;border:none;background:transparent;color:#b7c6cd;font-size:10px;text-align:left;padding:0 8px;border-radius:5px;cursor:pointer;font-family:inherit">Method</button>
-            </div>
-          </sc-if>
-        </div>
-        <button onClick="{{ onOpenImport }}" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:6px;border:none;background:linear-gradient(90deg,#1f3f73,#5795f5);color:#030609;font-size:10px;font-weight:600;cursor:pointer">Import telemetry</button>
+        <button onClick="{{ onOpenHelp }}" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:6px;border:1px solid var(--hairline);background:transparent;color:var(--fg-muted);font-size:11px;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px solid var(--border-strong);font-size:9px;line-height:1">?</span>Help</button>
+        <button onClick="{{ onOpenImport }}" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:6px;border:none;background:var(--accent);color:var(--ground);font-size:11px;font-weight:600;cursor:pointer">Import telemetry</button>
+        <button onclick="window.astraLogout && window.astraLogout()" style="height:28px;padding:0 12px;border-radius:6px;border:1px solid var(--hairline);background:transparent;color:var(--fg-muted);font-size:11px;cursor:pointer">Sign out</button>
       </div>
     </header>
 
-    <main style="flex:1;min-width:0;padding:18px 26px 20px;overflow:auto">
+    <main data-dc-preserve-scroll style="flex:1;min-width:0;padding:18px 26px 20px;overflow:auto">
 
       <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;flex-direction:column;gap:12px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;gap:20px">
             <div>
-              <p style="margin:0 0 6px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Navigation integrity / live decision</p>
-              <h1 style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:24px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Can this position <span style="color:#b7c6cd">be trusted?</span></h1>
+              <p style="margin:0 0 6px;color:var(--fg-muted);font:11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase">Navigation integrity</p>
+              <h1 style="margin:0;font-family:var(--display);font-size:24px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Can this position<br><span style="color:var(--fg-dim)">be trusted?</span></h1>
             </div>
-            <span style="color:#71858f;font:9px/1.4 'IBM Plex Mono',monospace;text-align:right">PIPELINE<br><strong style="color:#b7c6cd">GATEWAY → PHYSICS → FUSION</strong></span>
+            <span class="label-micro" style="text-align:right">PIPELINE<br><strong style="color:var(--fg-muted)">GATEWAY → PHYSICS → FUSION</strong></span>
           </div>
 
           <div style="display:grid;grid-template-columns:1.3fr .7fr;gap:12px">
-            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:16px">
+            <div class="panel panel--pad">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
                 <span style="width:8px;height:8px;border-radius:50%;background:{{ curColor }};box-shadow:0 0 12px {{ curColor }}"></span>
-                <strong style="font-size:12px;letter-spacing:.04em">{{ curState }}</strong>
+                <strong style="font-size:14px;letter-spacing:.04em">{{ curState }}</strong>
               </div>
               <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
-                <strong style="font-family:'Instrument Sans',sans-serif;font-size:32px;font-weight:500">{{ curScore }}</strong><span style="color:#71858f;font-size:14px">/100</span>
+                <strong style="font-family:var(--display);font-size:32px;font-weight:500">{{ curScore }}</strong><span style="color:var(--fg-muted);font-size:14px">/100</span>
               </div>
-              <p style="margin:0 0 10px;color:#b7c6cd;font-size:12px;line-height:1.4">{{ curReason }}</p>
-              <button onClick="{{ onOpenWhy }}" style="height:24px;padding:0 12px;margin-bottom:10px;border-radius:6px;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;font-size:10px;cursor:pointer;font-family:inherit">Why this decision ›</button>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
-                <div class="astra-map-shell" style="width:100%;height:110px">
+              <p style="margin:0 0 10px;color:var(--fg-muted);font-size:14px;line-height:1.4">{{ curReason }}</p>
+              <button onClick="{{ onOpenWhy }}" style="height:24px;padding:0 12px;margin-bottom:10px;border-radius:6px;border:1px solid var(--hairline);background:transparent;color:var(--fg-muted);font-size:11px;cursor:pointer;font-family:inherit">Why this decision ›</button>
+              <div style="margin-bottom:8px">
+                <div class="astra-map-shell" style="width:100%;max-width:640px;height:200px">
                   <div id="astraTrajectoryMap" data-dc-stable="astraTrajectoryMap"></div>
                   <div class="astra-map-toolbar">
                     <sc-for list="{{ mapStyleOptions }}" as="ms" hint-placeholder-count="2">
-                      <button onClick="{{ ms.onClick }}" style="{{ ms.style }}">{{ ms.label }}</button>
+                      <button onClick="{{ ms.onClick }}" class="{{ ms.className }}">{{ ms.label }}</button>
                     </sc-for>
                   </div>
                   <div class="astra-map-readout">
@@ -148,84 +157,78 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
                     <strong style="display:block;margin-top:2px"><span>{{ curLat }}</span> / <span>{{ curLon }}</span></strong>
                   </div>
                 </div>
-                <svg viewBox="0 0 600 160" style="width:100%;height:110px;display:block" preserveAspectRatio="none">
-                  <line x1="0" y1="32" x2="600" y2="32" stroke="rgba(32,55,67,.08)"></line>
-                  <line x1="0" y1="80" x2="600" y2="80" stroke="rgba(32,55,67,.08)"></line>
-                  <line x1="0" y1="128" x2="600" y2="128" stroke="rgba(32,55,67,.08)"></line>
-                  <path d="{{ timelineArea }}" fill="rgba(87,149,245,.28)"></path>
-                  <path d="{{ timelinePath }}" fill="none" stroke="#5795f5" stroke-width="2"></path>
-                  <circle cx="{{ timelineMarkerX }}" cy="{{ timelineMarkerY }}" r="5" fill="#dbe5e9" stroke="{{ curColor }}" stroke-width="2"></circle>
-                </svg>
+
               </div>
-              <input type="range" min="0" max="{{ maxIndex }}" value="{{ currentIndex }}" onChange="{{ onScrub }}" style="width:100%;margin-top:4px" />
+              <input type="range" min="0" max="{{ maxIndex }}" value="{{ currentIndex }}" onChange="{{ onScrub }}" aria-label="Scrub through epochs" style="width:100%;margin-top:4px" />
               <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
-                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">EPOCH {{ epochLabel }}</span>
+                <span class="label-micro">EPOCH {{ epochLabel }}</span>
                 <div style="display:flex;gap:6px">
-                  <button onClick="{{ onReset }}" style="width:26px;height:26px;border-radius:6px;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;cursor:pointer;font-size:11px">⟲</button>
-                  <button onClick="{{ onTogglePlay }}" style="height:26px;padding:0 14px;border-radius:6px;border:none;background:linear-gradient(90deg,#1f3f73,#5795f5);color:#030609;cursor:pointer;font-size:10px;font-weight:600">{{ playLabel }}</button>
-                  <button onClick="{{ onNext }}" style="width:26px;height:26px;border-radius:6px;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;cursor:pointer;font-size:11px">⏭</button>
-                  <div style="display:flex;gap:4px;margin-left:6px;border-left:1px solid rgba(32,55,67,.14);padding-left:8px">
+                  <button onClick="{{ onReset }}" class="btn btn--ghost btn--icon" aria-label="Reset to first epoch">⟲</button>
+                  <button onClick="{{ onPrevious }}" class="btn btn--ghost btn--icon" aria-label="Previous epoch">⏮</button>
+                  <button onClick="{{ onTogglePlay }}" class="btn btn--primary">{{ playLabel }}</button>
+                  <button onClick="{{ onNext }}" class="btn btn--ghost btn--icon" aria-label="Next epoch">⏭</button>
+                  <div style="display:flex;gap:4px;margin-left:6px;border-left:1px solid var(--hairline);padding-left:8px">
                     <sc-for list="{{ speedOptions }}" as="sp" hint-placeholder-count="3">
-                      <button onClick="{{ sp.onClick }}" style="{{ sp.style }}">{{ sp.label }}</button>
+                      <button onClick="{{ sp.onClick }}" class="{{ sp.className }}">{{ sp.label }}</button>
                     </sc-for>
                   </div>
                 </div>
               </div>
             </div>
-            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div class="panel panel--pad" style="display:flex;flex-direction:column;gap:10px">
               <div>
-                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">RECOMMENDED ACTION</span>
+                <span class="label-micro">RECOMMENDED ACTION</span>
                 <p style="margin:6px 0 0;font-size:13px;font-weight:500">{{ curAction }}</p>
               </div>
-              <div style="border-top:1px solid rgba(32,55,67,.12);padding-top:10px">
-                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">DECISION CONFIDENCE</span>
+              <div style="border-top:1px solid var(--hairline);padding-top:10px">
+                <span class="label-micro">DECISION CONFIDENCE</span>
                 <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-                  <i style="flex:1;height:5px;border-radius:6px;background:rgba(32,55,67,.1);overflow:hidden;display:block"><b style="display:block;height:100%;width:{{ curConfidence }}%;background:#5795f5"></b></i>
-                  <strong style="font:11px/1 'IBM Plex Mono',monospace">{{ curConfidence }}%</strong>
+                  <i style="flex:1;height:5px;border-radius:6px;background:var(--muted-surface);overflow:hidden;display:block"><b style="display:block;height:100%;width:{{ curConfidence }}%;background:var(--accent)"></b></i>
+                  <strong style="font:13px/1 var(--mono)">{{ curConfidence }}%</strong>
                 </div>
               </div>
-              <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid rgba(32,55,67,.12);padding-top:10px">
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">LATITUDE</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curLat }}</dd></div>
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">LONGITUDE</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curLon }}</dd></div>
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">ALTITUDE MSL</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curAltitude }}</dd></div>
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">HEADING COG</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curHeading }}</dd></div>
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">SATELLITES</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curSatellites }}</dd></div>
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">HDOP</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curHdop }}</dd></div>
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">GROUND SPEED</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curSpeed }}</dd></div>
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">FIX QUALITY</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curFix }}</dd></div>
+              <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid var(--hairline);padding-top:10px">
+                <div><dt class="label-micro">LATITUDE</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ curLat }}</dd></div>
+                <div><dt class="label-micro">LONGITUDE</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ curLon }}</dd></div>
+                <div><dt class="label-micro">ALTITUDE MSL</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ curAltitude }}</dd></div>
+                <div><dt class="label-micro">HEADING COG</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ curHeading }}</dd></div>
+                <div><dt class="label-micro">SATELLITES</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ curSatellites }}</dd></div>
+                <div><dt class="label-micro">HDOP</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ curHdop }}</dd></div>
+                <div><dt class="label-micro">GROUND SPEED</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ curSpeed }}</dd></div>
+                <div><dt class="label-micro">FIX QUALITY</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ curFix }}</dd></div>
               </dl>
             </div>
           </div>
 
           <div style="display:grid;grid-template-columns:1.55fr .95fr;gap:12px">
-            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
-              <header style="display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(32,55,67,.12)"><strong style="color:#b7c6cd;font-size:10px">LIVE NAVIGATION MONITOR</strong><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">LAST 20 EPOCHS</span></header>
+            <div class="panel panel--clip">
+              <header style="display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-bottom:1px solid var(--hairline)"><h2 class="panel__title">LIVE NAVIGATION MONITOR</h2><span class="label-micro">LAST 20 EPOCHS</span></header>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:10px 18px">
                 <div>
-                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">TRUST SCORE</span><strong style="font:10px/1 'IBM Plex Mono',monospace">{{ curScore }}</strong></div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span class="label-micro">TRUST SCORE</span><strong style="font:11px/1 var(--mono)">{{ curScore }}</strong></div>
                   <svg viewBox="0 0 160 48" style="width:100%;height:30px;display:block" preserveAspectRatio="none"><path d="{{ sparkTrust }}" fill="none" stroke="{{ curColor }}" stroke-width="1.5"></path></svg>
                 </div>
                 <div>
-                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">GROUND SPEED</span><strong style="font:10px/1 'IBM Plex Mono',monospace">{{ curSpeed }}</strong></div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span class="label-micro">GROUND SPEED</span><strong style="font:11px/1 var(--mono)">{{ curSpeed }}</strong></div>
                   <svg viewBox="0 0 160 48" style="width:100%;height:30px;display:block" preserveAspectRatio="none"><path d="{{ sparkSpeed }}" fill="none" stroke="#78d3dc" stroke-width="1.5"></path></svg>
                 </div>
                 <div>
-                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">HDOP</span><strong style="font:10px/1 'IBM Plex Mono',monospace">{{ curHdop }}</strong></div>
-                  <svg viewBox="0 0 160 48" style="width:100%;height:30px;display:block" preserveAspectRatio="none"><path d="{{ sparkHdop }}" fill="none" stroke="#d8a45c" stroke-width="1.5"></path></svg>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span class="label-micro">HDOP</span><strong style="font:11px/1 var(--mono)">{{ curHdop }}</strong></div>
+                  <svg viewBox="0 0 160 48" style="width:100%;height:30px;display:block" preserveAspectRatio="none"><path d="{{ sparkHdop }}" fill="none" stroke="var(--degraded)" stroke-width="1.5"></path></svg>
                 </div>
               </div>
             </div>
-            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
-              <header style="display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(32,55,67,.12)">
-                <strong style="color:#b7c6cd;font-size:10px">EVIDENCE SNAPSHOT</strong>
-                <button onClick="{{ onGoEvidence }}" style="border:none;background:transparent;color:#96c0fb;font-size:9px;cursor:pointer;font-family:inherit">Inspect all ↗</button>
+            <div class="panel panel--clip">
+              <header style="display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-bottom:1px solid var(--hairline)">
+                <h2 class="panel__title">EVIDENCE SNAPSHOT</h2>
+                <button onClick="{{ onGoEvidence }}" class="btn btn--ghost" style="min-height:26px;padding:0 10px;font-size:12px">Inspect all ↗</button>
               </header>
               <div style="display:flex;flex-direction:column">
                 <sc-for list="{{ evidenceSnapshot }}" as="ev" hint-placeholder-count="5">
-                  <div style="display:flex;align-items:center;gap:10px;padding:6px 18px;border-bottom:1px solid rgba(32,55,67,.08)">
+                  <div style="display:flex;align-items:center;gap:10px;padding:6px 18px;border-bottom:1px solid var(--hairline)">
                     <span style="width:6px;height:6px;border-radius:50%;background:{{ ev.color }}"></span>
-                    <span style="flex:1;font-size:10px;color:#b7c6cd">{{ ev.name }}</span>
-                    <span style="color:{{ ev.color }};font:8px/1 'IBM Plex Mono',monospace">{{ ev.status }}</span>
+                    <span style="flex:1;font-size:11px;color:var(--fg-muted)">{{ ev.name }}</span>
+                    <span style="color:{{ ev.color }};font:11px/1 var(--mono)">{{ ev.status }}</span>
                   </div>
                 </sc-for>
               </div>
@@ -236,32 +239,32 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 
       <sc-if value="{{ isScenario }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:18px">
-          <p style="margin:0 0 10px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Threat simulation / deterministic replay</p>
-          <h1 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Test the system.<br><span style="color:#b7c6cd">Break the signal.</span></h1>
-          <p style="margin:0 0 6px;color:#b7c6cd;font-size:12px;max-width:560px;line-height:1.6">Run reproducible navigation conditions through the ASTRA evidence pipeline and inspect every state transition.</p>
+          <p style="margin:0 0 10px;color:var(--fg-muted);font:11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase">Threat simulation</p>
+          <h1 style="margin:0 0 4px;font-family:var(--display);font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Test the system<br><span style="color:var(--fg-dim)">Break the signal</span></h1>
+          <p style="margin:0 0 6px;color:var(--fg-muted);font-size:14px;max-width:560px;line-height:1.6">Run reproducible navigation conditions through the ASTRA evidence pipeline and inspect every state transition.</p>
           <div style="display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:start">
             <div style="display:flex;flex-direction:column;gap:6px">
               <sc-for list="{{ scenarioList }}" as="s" hint-placeholder-count="6">
-                <button onClick="{{ s.onClick }}" style="{{ s.style }}">
-                  <span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">{{ s.num }}</span>
-                  <strong style="font-size:11px;font-weight:500">{{ s.name }}</strong>
+                <button onClick="{{ s.onClick }}" class="{{ s.className }}">
+                  <span class="label-micro">{{ s.num }}</span>
+                  <strong style="font-size:13px;font-weight:500">{{ s.name }}</strong>
                 </button>
               </sc-for>
             </div>
-            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:26px">
-              <div style="color:#71858f;font:24px/1 'IBM Plex Mono',monospace;margin-bottom:8px">{{ selScenarioNum }}</div>
-              <span style="padding:4px 9px;border-radius:20px;background:rgba(229,106,114,.1);border:1px solid rgba(229,106,114,.3);color:#e56a72;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">{{ selScenarioCategory }}</span>
-              <h2 style="margin:14px 0 8px;font-family:'Instrument Sans',sans-serif;font-size:20px;font-weight:500">{{ selScenarioName }}</h2>
-              <p style="margin:0 0 18px;color:#b7c6cd;font-size:12px;line-height:1.6">{{ selScenarioDescription }}</p>
-              <dl style="margin:0 0 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;border-top:1px solid rgba(32,55,67,.12);padding-top:14px">
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">EXPECTED DECISION</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ selScenarioExpected }}</dd></div>
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">OBSERVATION COUNT</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">25 epochs</dd></div>
+            <div class="panel" style="padding:26px">
+              <div class="label-micro" style="margin-bottom:8px">{{ selScenarioNum }}</div>
+              <span class="tag {{ selScenarioTagClass }}">{{ selScenarioCategory }}</span>
+              <h2 style="margin:14px 0 8px;font-family:var(--display);font-size:20px;font-weight:500">{{ selScenarioName }}</h2>
+              <p style="margin:0 0 18px;color:var(--fg-muted);font-size:14px;line-height:1.6">{{ selScenarioDescription }}</p>
+              <dl style="margin:0 0 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;border-top:1px solid var(--hairline);padding-top:14px">
+                <div><dt class="label-micro">EXPECTED DECISION</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ selScenarioExpected }}</dd></div>
+                <div><dt class="label-micro">OBSERVATION COUNT</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">25 epochs</dd></div>
               </dl>
-              <div style="margin-bottom:18px;padding-top:14px;border-top:1px solid rgba(32,55,67,.12)">
-                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">WHAT THIS PROVES</span>
-                <p style="margin:8px 0 0;color:#dbe5e9;font-size:12px">{{ selScenarioTakeaway }}</p>
+              <div style="margin-bottom:18px;padding-top:14px;border-top:1px solid var(--hairline)">
+                <span class="label-micro">WHAT THIS PROVES</span>
+                <p style="margin:8px 0 0;color:var(--fg);font-size:14px">{{ selScenarioTakeaway }}</p>
               </div>
-              <button onClick="{{ onRunScenario }}" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 18px;border-radius:2px;border:none;background:linear-gradient(90deg,#1f3f73,#5795f5);color:#030609;font-size:11px;font-weight:600;cursor:pointer">Run scenario ↗</button>
+              <button onClick="{{ onRunScenario }}" style="display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 18px;border-radius:2px;border:none;background:var(--accent);color:var(--ground);font-size:13px;font-weight:600;cursor:pointer">Run scenario ↗</button>
             </div>
           </div>
         </div>
@@ -269,33 +272,35 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 
       <sc-if value="{{ isEvidence }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:18px">
-          <p style="margin:0 0 10px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Explainable decision / current epoch</p>
-          <h1 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Evidence before<br><span style="color:#b7c6cd">confidence.</span></h1>
-          <p style="margin:0 0 6px;color:#b7c6cd;font-size:12px;max-width:560px;line-height:1.6">Every check declares its source, threshold, availability and effect on the fused trust decision. Currently inspecting epoch {{ epochLabel }} of {{ scenarioName }}.</p>
+          <p style="margin:0 0 10px;color:var(--fg-muted);font:11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase">Explainable decision</p>
+          <h1 style="margin:0 0 4px;font-family:var(--display);font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Evidence before<br><span style="color:var(--fg-dim)">confidence</span></h1>
+          <p style="margin:0 0 6px;color:var(--fg-muted);font-size:14px;max-width:560px;line-height:1.6">Every check declares its source, threshold, availability and effect on the fused trust decision. Currently inspecting epoch {{ epochLabel }} of {{ scenarioName }}.</p>
           <div style="display:flex;gap:6px">
             <sc-for list="{{ evidenceFilters }}" as="f" hint-placeholder-count="4">
-              <button onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</button>
+              <button onClick="{{ f.onClick }}" class="{{ f.className }}">{{ f.label }}</button>
             </sc-for>
           </div>
-          <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
-            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr .6fr .8fr;padding:12px 18px;border-bottom:1px solid rgba(32,55,67,.12);color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">
+          <div class="panel panel--clip">
+            <div style="display:grid;grid-template-columns:1.8fr .7fr .7fr 1.3fr .5fr .8fr;padding:12px 18px;border-bottom:1px solid var(--hairline);color:var(--fg-muted);font:11px/1 var(--mono);letter-spacing:.06em">
               <span>EVIDENCE CHECK</span><span>LAYER</span><span>OBSERVED</span><span>THRESHOLD</span><span>WEIGHT</span><span>STATUS</span>
             </div>
-            <sc-for list="{{ evidenceRows }}" as="row" hint-placeholder-count="7">
+            <div class="evidence-scroll">
+<sc-for list="{{ evidenceRows }}" as="row" hint-placeholder-count="7">
               <div>
-                <button onClick="{{ row.onClick }}" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr .6fr .8fr;padding:13px 18px;border-bottom:1px solid rgba(32,55,67,.08);align-items:center;font-size:11px;width:100%;text-align:left;border-left:none;border-right:none;border-top:none;background:transparent;cursor:pointer;font-family:inherit">
-                  <strong style="font-weight:500;color:#dbe5e9">{{ row.name }}</strong>
-                  <span style="color:#b7c6cd;font:10px/1 'IBM Plex Mono',monospace">{{ row.layer }}</span>
-                  <span style="color:#b7c6cd;font:10px/1 'IBM Plex Mono',monospace">{{ row.value }}</span>
-                  <span style="color:#71858f;font:10px/1 'IBM Plex Mono',monospace">{{ row.threshold }}</span>
-                  <span style="color:#71858f;font:10px/1 'IBM Plex Mono',monospace">{{ row.weight }}</span>
-                  <span style="color:{{ row.color }};font:9px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">{{ row.status }}</span>
+                <button onClick="{{ row.onClick }}" style="display:grid;grid-template-columns:1.8fr .7fr .7fr 1.3fr .5fr .8fr;padding:13px 18px;border-bottom:1px solid var(--hairline);align-items:center;font-size:13px;width:100%;text-align:left;border-left:none;border-right:none;border-top:none;background:transparent;cursor:pointer;font-family:inherit">
+                  <strong style="font-weight:500;color:var(--fg)">{{ row.name }}</strong>
+                  <span class="label-micro">{{ row.layer }}</span>
+                  <span class="label-micro">{{ row.value }}</span>
+                  <span class="label-micro">{{ row.threshold }}</span>
+                  <span class="label-micro">{{ row.weight }}</span>
+                  <span style="color:{{ row.color }};font:11px/1 var(--mono);letter-spacing:.06em">{{ row.status }}</span>
                 </button>
                 <sc-if value="{{ row.expanded }}" hint-placeholder-val="{{ false }}">
-                  <div style="padding:14px 18px;background:rgba(32,55,67,.03);border-bottom:1px solid rgba(32,55,67,.08);color:#b7c6cd;font-size:11px;line-height:1.6">{{ row.explanation }}</div>
+                  <div style="padding:14px 18px;background:var(--muted-surface);border-bottom:1px solid var(--hairline);color:var(--fg-muted);font-size:13px;line-height:1.6">{{ row.explanation }}</div>
                 </sc-if>
               </div>
             </sc-for>
+            </div>
           </div>
         </div>
       </sc-if>
@@ -304,66 +309,72 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
         <div style="display:flex;flex-direction:column;gap:18px">
           <div style="display:grid;grid-template-columns:minmax(0,1fr) 240px;align-items:end;gap:28px">
             <div>
-              <p style="margin:0 0 10px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Continuous surveillance / live incidents</p>
-              <h1 style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:32px;font-weight:500;line-height:.98;letter-spacing:-.03em">Every anomaly logged.<br><span style="color:#b7c6cd">Nothing missed.</span></h1>
+              <p style="margin:0 0 10px;color:var(--fg-muted);font:11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase">Continuous surveillance</p>
+              <h1 style="margin:0;font-family:var(--display);font-size:32px;font-weight:500;line-height:.98;letter-spacing:-.03em">Every anomaly logged<br><span style="color:var(--fg-dim)">Nothing missed</span></h1>
             </div>
-            <div style="display:flex;flex-direction:column;gap:6px;padding:12px 0 3px;border-top:1px solid rgba(32,55,67,.12)">
-              <span style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">MONITORING</span>
-              <strong style="color:#5795f5;font:9px/1.4 'IBM Plex Mono',monospace">{{ incidentFeedSummary }}</strong>
+            <div style="display:flex;flex-direction:column;gap:6px;padding:12px 0 3px;border-top:1px solid var(--hairline)">
+              <span class="label-micro">MONITORING</span>
+              <strong style="color:var(--accent);font:11px/1.4 var(--mono)">{{ incidentFeedSummary }}</strong>
             </div>
           </div>
 
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
-            <div style="padding:16px 18px;border-right:1px solid rgba(32,55,67,.12)"><span style="display:block;color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">OPEN</span><strong style="display:block;margin-top:10px;font-family:'Instrument Sans',sans-serif;font-size:22px;color:#e56a72">{{ incidentOpenCount }}</strong></div>
-            <div style="padding:16px 18px;border-right:1px solid rgba(32,55,67,.12)"><span style="display:block;color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">ACKNOWLEDGED</span><strong style="display:block;margin-top:10px;font-family:'Instrument Sans',sans-serif;font-size:22px;color:#d8a45c">{{ incidentAckCount }}</strong></div>
-            <div style="padding:16px 18px;border-right:1px solid rgba(32,55,67,.12)"><span style="display:block;color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">QUARANTINED</span><strong style="display:block;margin-top:10px;font-family:'Instrument Sans',sans-serif;font-size:22px;color:#e56a72">{{ incidentCriticalCount }}</strong></div>
-            <div style="padding:16px 18px"><span style="display:block;color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">SUSPICIOUS</span><strong style="display:block;margin-top:10px;font-family:'Instrument Sans',sans-serif;font-size:22px;color:#d8a45c">{{ incidentWarningCount }}</strong></div>
+          <div class="panel panel--clip" style="display:grid;grid-template-columns:repeat(4,1fr)">
+            <div style="padding:16px 18px;border-right:1px solid var(--hairline)"><span class="label-micro">OPEN</span><strong class="metric" style="display:block;margin-top:10px;font-size:28px;color:{{ incidentOpenCountColor }}">{{ incidentOpenCount }}</strong></div>
+            <div style="padding:16px 18px;border-right:1px solid var(--hairline)"><span class="label-micro">ACKNOWLEDGED</span><strong class="metric" style="display:block;margin-top:10px;font-size:28px;color:{{ incidentAckCountColor }}">{{ incidentAckCount }}</strong></div>
+            <div style="padding:16px 18px;border-right:1px solid var(--hairline)"><span class="label-micro">QUARANTINED</span><strong class="metric" style="display:block;margin-top:10px;font-size:28px;color:{{ incidentCriticalCountColor }}">{{ incidentCriticalCount }}</strong></div>
+            <div style="padding:16px 18px"><span class="label-micro">SUSPICIOUS</span><strong class="metric" style="display:block;margin-top:10px;font-size:28px;color:{{ incidentWarningCountColor }}">{{ incidentWarningCount }}</strong></div>
           </div>
 
           <div style="display:grid;grid-template-columns:1.55fr .95fr;gap:16px;align-items:start">
-            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
-              <header style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(32,55,67,.12)">
-                <strong style="color:#b7c6cd;font-size:10px;font-weight:500">INCIDENT FEED</strong>
+            <div class="panel panel--clip">
+              <header style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--hairline)">
+                <h2 class="panel__title">INCIDENT FEED</h2>
               </header>
               <div style="display:flex;flex-direction:column">
                 <sc-for list="{{ incidents }}" as="inc" hint-placeholder-count="4">
-                  <button onClick="{{ inc.onClick }}" style="position:relative;display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;align-items:center;gap:14px;padding:16px 18px;border:none;border-bottom:1px solid rgba(32,55,67,.12);width:100%;text-align:left;cursor:pointer;font-family:inherit;background:{{ inc.bg }}">
+                  <button onClick="{{ inc.onClick }}" style="position:relative;display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;align-items:center;gap:14px;padding:16px 18px;border:none;border-bottom:1px solid var(--hairline);width:100%;text-align:left;cursor:pointer;font-family:inherit;background:{{ inc.bg }}">
                     <span style="width:6px;height:6px;border-radius:50%;background:{{ inc.dotColor }};box-shadow:0 0 10px {{ inc.dotColor }}"></span>
                     <div style="min-width:0;display:flex;flex-direction:column;gap:4px">
-                      <strong style="color:#dbe5e9;font-size:11px;font-weight:500">{{ inc.title }}</strong>
-                      <span style="color:#71858f;font:8px/1.4 'IBM Plex Mono',monospace">{{ inc.subtitle }}</span>
+                      <strong style="color:var(--fg);font-size:13px;font-weight:500">{{ inc.title }}</strong>
+                      <span class="label-micro">{{ inc.subtitle }}</span>
                     </div>
-                    <span style="color:#b7c6cd;font:9px/1 'IBM Plex Mono',monospace;text-align:right">{{ inc.scoreChange }}</span>
-                    <span style="padding:5px 9px;border:1px solid {{ inc.borderColor }};border-radius:20px;background:{{ inc.pillBg }};color:{{ inc.dotColor }};font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">{{ inc.status }}</span>
+                    <span class="label-micro" style="text-align:right">{{ inc.scoreChange }}</span>
+                    <span style="padding:5px 9px;border:1px solid {{ inc.borderColor }};border-radius:20px;background:{{ inc.pillBg }};color:{{ inc.dotColor }};font:11px/1 var(--mono);letter-spacing:.06em">{{ inc.status }}</span>
                   </button>
                 </sc-for>
+                <sc-if value="{{ hasNoIncidents }}" hint-placeholder-val="{{ false }}">
+                  <div class="empty">
+                    <strong class="empty__title">No incidents in this feed</strong>
+                    <p class="empty__body">This scenario produced no suspicious or quarantined epochs. Run a threat scenario from Scenario lab to populate the feed.</p>
+                  </div>
+                </sc-if>
               </div>
             </div>
 
-            <div style="position:relative;padding:22px 22px 24px;border:1px solid rgba(87,149,245,.5);border-radius:2px;background:radial-gradient(circle at 80% 0,rgba(87,149,245,.16),transparent 45%),#0b141b">
-              <i style="position:absolute;top:-1px;left:-1px;width:11px;height:11px;border-top:1.5px solid #5795f5;border-left:1.5px solid #5795f5"></i>
-              <i style="position:absolute;top:-1px;right:-1px;width:11px;height:11px;border-top:1.5px solid #5795f5;border-right:1.5px solid #5795f5"></i>
-              <i style="position:absolute;bottom:-1px;left:-1px;width:11px;height:11px;border-bottom:1.5px solid #5795f5;border-left:1.5px solid #5795f5"></i>
-              <i style="position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-bottom:1.5px solid #5795f5;border-right:1.5px solid #5795f5"></i>
-              <span style="color:#e56a72;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em">{{ selIncidentTag }}</span>
-              <h2 style="margin:14px 0 6px;font-family:'Instrument Sans',sans-serif;font-size:19px;font-weight:500;letter-spacing:-.02em;line-height:1.2">{{ selIncidentTitle }}</h2>
-              <p style="margin:0 0 20px;color:#b7c6cd;font-size:11px;line-height:1.55">{{ selIncidentDetail }}</p>
+            <div style="position:relative;padding:22px 22px 24px;border:1px solid rgba(87,149,245,.5);border-radius:2px;background:radial-gradient(circle at 80% 0,rgba(87,149,245,.16),transparent 45%),var(--card)">
+              <i style="position:absolute;top:-1px;left:-1px;width:11px;height:11px;border-top:1.5px solid var(--accent);border-left:1.5px solid var(--accent)"></i>
+              <i style="position:absolute;top:-1px;right:-1px;width:11px;height:11px;border-top:1.5px solid var(--accent);border-right:1.5px solid var(--accent)"></i>
+              <i style="position:absolute;bottom:-1px;left:-1px;width:11px;height:11px;border-bottom:1.5px solid var(--accent);border-left:1.5px solid var(--accent)"></i>
+              <i style="position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-bottom:1.5px solid var(--accent);border-right:1.5px solid var(--accent)"></i>
+              <span style="color:var(--quarantined);font:11px/1 var(--mono);letter-spacing:.12em">{{ selIncidentTag }}</span>
+              <h2 style="margin:14px 0 6px;font-family:var(--display);font-size:19px;font-weight:500;letter-spacing:-.02em;line-height:1.2">{{ selIncidentTitle }}</h2>
+              <p style="margin:0 0 20px;color:var(--fg-muted);font-size:13px;line-height:1.55">{{ selIncidentDetail }}</p>
 
-              <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(32,55,67,.12)">
-                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(32,55,67,.12)"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.08em">STREAM</span><span style="color:#b7c6cd;font:9px/1 'IBM Plex Mono',monospace">{{ selIncidentStream }}</span></div>
-                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(32,55,67,.12)"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.08em">EPOCH</span><span style="color:#b7c6cd;font:9px/1 'IBM Plex Mono',monospace">{{ selIncidentEpoch }}</span></div>
-                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(32,55,67,.12)"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.08em">EVIDENCE LAYER</span><span style="color:#b7c6cd;font:9px/1 'IBM Plex Mono',monospace">{{ selIncidentLayer }}</span></div>
-                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(32,55,67,.12)"><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.08em">CHAIN HASH</span><span style="color:#b7c6cd;font:9px/1 'IBM Plex Mono',monospace">{{ selIncidentHash }}</span></div>
+              <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--hairline)">
+                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--hairline)"><span class="label-micro">STREAM</span><span class="label-micro">{{ selIncidentStream }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--hairline)"><span class="label-micro">EPOCH</span><span class="label-micro">{{ selIncidentEpoch }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--hairline)"><span class="label-micro">EVIDENCE LAYER</span><span class="label-micro">{{ selIncidentLayer }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--hairline)"><span class="label-micro">CHAIN HASH</span><span class="label-micro">{{ selIncidentHash }}</span></div>
               </div>
 
-              <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(32,55,67,.12)">
-                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">RECOMMENDED ACTION</span>
-                <p style="margin:10px 0 0;color:#dbe5e9;font-size:12px;font-weight:500">{{ selIncidentAction }}</p>
+              <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--hairline)">
+                <span class="label-micro">RECOMMENDED ACTION</span>
+                <p style="margin:10px 0 0;color:var(--fg);font-size:14px;font-weight:500">{{ selIncidentAction }}</p>
               </div>
 
               <div style="display:flex;gap:8px;margin-top:22px">
-                <button onClick="{{ onAcknowledge }}" style="flex:1;height:34px;display:flex;align-items:center;justify-content:center;border:none;border-radius:2px;background:{{ ackButtonBg }};color:#030609;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit">{{ ackButtonLabel }}</button>
-                <button onClick="{{ onViewIncidentEvidence }}" style="flex:1;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(32,55,67,.24);border-radius:2px;background:transparent;color:#b7c6cd;font-size:10px;cursor:pointer;font-family:inherit">View evidence</button>
+                <button onClick="{{ onAcknowledge }}" class="{{ ackButtonClass }}" style="flex:1">{{ ackButtonLabel }}</button>
+                <button onClick="{{ onViewIncidentEvidence }}" style="flex:1;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-strong);border-radius:2px;background:transparent;color:var(--fg-muted);font-size:11px;cursor:pointer;font-family:inherit">View evidence</button>
               </div>
             </div>
           </div>
@@ -372,155 +383,142 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 
       <sc-if value="{{ isForensics }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:18px">
-          <p style="margin:0 0 10px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Cryptographic memory / event chain</p>
-          <h1 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Every decision.<br><span style="color:#b7c6cd">Impossible to rewrite quietly.</span></h1>
-          <p style="margin:0 0 6px;color:#b7c6cd;font-size:12px;max-width:560px;line-height:1.6">Each operational decision is chained to the previous event, exposing modification anywhere in the record.</p>
+          <p style="margin:0 0 10px;color:var(--fg-muted);font:11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase">Cryptographic memory</p>
+          <h1 style="margin:0 0 4px;font-family:var(--display);font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Every decision<br><span style="color:var(--fg-dim)">Impossible to rewrite quietly</span></h1>
+          <p style="margin:0 0 6px;color:var(--fg-muted);font-size:14px;max-width:560px;line-height:1.6">Each operational decision is chained to the previous event, exposing modification anywhere in the record.</p>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:24px;display:flex;align-items:center;gap:18px">
-              <span style="width:44px;height:44px;border-radius:50%;border:2px solid #5795f5;box-shadow:0 0 16px rgba(87,149,245,.5);flex:none"></span>
+            <div class="panel" style="padding:24px;display:flex;align-items:center;gap:18px">
+              <span style="width:44px;height:44px;border-radius:50%;border:2px solid var(--trusted);display:grid;place-items:center;color:var(--trusted);font-size:20px;line-height:1;flex:none" aria-hidden="true">&#10003;</span>
               <div>
-                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">CHAIN STATUS</span>
-                <h2 style="margin:6px 0 4px;font-family:'Instrument Sans',sans-serif;font-size:18px;font-weight:500;color:#5795f5">CHAIN VALID</h2>
-                <span style="color:#71858f;font-size:11px">Every event hash resolves.</span>
+                <span class="label-micro">CHAIN STATUS</span>
+                <h2 style="margin:6px 0 4px;font-family:var(--display);font-size:18px;font-weight:500;color:var(--trusted)">CHAIN VALID</h2>
+                <span style="color:var(--fg-muted);font-size:13px">Every event hash resolves.</span>
               </div>
             </div>
-            <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:24px">
-              <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">DATASET SHA-256</span>
-              <code style="display:block;margin:8px 0 16px;color:#b7c6cd;font-size:11px;word-break:break-all">SIMULATED_DATASET_VERIFIED</code>
-              <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid rgba(32,55,67,.12);padding-top:14px">
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">EVENTS CHAINED</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ eventCount }}</dd></div>
-                <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">LAST SEQUENCE</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ lastSequence }}</dd></div>
+            <div class="panel" style="padding:24px">
+              <span class="label-micro">DATASET SHA-256</span>
+              <code style="display:block;margin:8px 0 16px;color:var(--fg-muted);font-size:13px;word-break:break-all">SIMULATED_DATASET_VERIFIED</code>
+              <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--hairline);padding-top:14px">
+                <div><dt class="label-micro">EVENTS CHAINED</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ eventCount }}</dd></div>
+                <div><dt class="label-micro">LAST SEQUENCE</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ lastSequence }}</dd></div>
               </dl>
             </div>
           </div>
-          <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;overflow:hidden">
-            <header style="padding:14px 18px;border-bottom:1px solid rgba(32,55,67,.12)"><strong style="color:#b7c6cd;font-size:10px">FORENSIC EVENTS — APPEND-ONLY AUDIT TRAIL / SELECT A BLOCK TO INSPECT</strong></header>
-            <sc-for list="{{ ledgerRows }}" as="ev" hint-placeholder-count="8">
+          <div class="panel panel--clip">
+            <header style="padding:14px 18px;border-bottom:1px solid var(--hairline)"><h2 class="panel__title">FORENSIC EVENTS — APPEND-ONLY AUDIT TRAIL / SELECT A BLOCK TO INSPECT</h2></header>
+            <div class="ledger-scroll" data-dc-preserve-scroll>
+<sc-for list="{{ ledgerRows }}" as="ev" hint-placeholder-count="8">
               <div>
-                <button onClick="{{ ev.onClick }}" style="display:grid;grid-template-columns:40px 1fr auto auto;align-items:center;gap:14px;padding:13px 18px;border:none;border-bottom:1px solid rgba(32,55,67,.08);font-size:11px;width:100%;text-align:left;cursor:pointer;font-family:inherit;background:transparent">
-                  <span style="color:#71858f;font:10px/1 'IBM Plex Mono',monospace">{{ ev.seq }}</span>
-                  <code style="color:#b7c6cd;font:10px/1 'IBM Plex Mono',monospace">{{ ev.hash }}</code>
-                  <strong style="color:{{ ev.color }};font-size:10px">{{ ev.state }}</strong>
-                  <span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">{{ ev.time }}</span>
+                <button onClick="{{ ev.onClick }}" style="display:grid;grid-template-columns:52px auto 1fr auto auto;align-items:center;gap:18px;padding:13px 18px;border:none;border-bottom:1px solid var(--hairline);font-size:13px;width:100%;text-align:left;cursor:pointer;font-family:inherit;background:transparent">
+                  <span class="label-micro">{{ ev.seq }}</span>
+                  <code class="label-micro">{{ ev.hash }}</code>
+                  <strong style="color:{{ ev.color }};font-size:11px">{{ ev.state }}</strong>
+                  <span class="label-micro">{{ ev.time }}</span>
                 </button>
                 <sc-if value="{{ ev.expanded }}" hint-placeholder-val="{{ false }}">
-                  <div style="padding:16px 18px;background:rgba(32,55,67,.03);border-bottom:1px solid rgba(32,55,67,.08);display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px">
-                    <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">PRIMARY REASON</span><p style="margin:4px 0 0;color:#b7c6cd">{{ ev.reason }}</p></div>
-                    <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">RECOMMENDED ACTION</span><p style="margin:4px 0 0;color:#b7c6cd">{{ ev.action }}</p></div>
-                    <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">PREVIOUS HASH</span><code style="display:block;margin:4px 0 0;color:#b7c6cd;word-break:break-all">{{ ev.prevHash }}</code></div>
-                    <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">CURRENT HASH</span><code style="display:block;margin:4px 0 0;color:#b7c6cd;word-break:break-all">{{ ev.hash }}</code></div>
+                  <div style="padding:16px 18px;background:var(--muted-surface);border-bottom:1px solid var(--hairline);display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+                    <div><span class="label-micro">PRIMARY REASON</span><p style="margin:4px 0 0;color:var(--fg-muted)">{{ ev.reason }}</p></div>
+                    <div><span class="label-micro">RECOMMENDED ACTION</span><p style="margin:4px 0 0;color:var(--fg-muted)">{{ ev.action }}</p></div>
+                    <div><span class="label-micro">PREVIOUS HASH</span><code style="display:block;margin:4px 0 0;color:var(--fg-muted);word-break:break-all">{{ ev.prevHash }}</code></div>
+                    <div><span class="label-micro">CURRENT HASH</span><code style="display:block;margin:4px 0 0;color:var(--fg-muted);word-break:break-all">{{ ev.hash }}</code></div>
                   </div>
                 </sc-if>
               </div>
             </sc-for>
+            </div>
           </div>
         </div>
       </sc-if>
 
       <sc-if value="{{ isEvaluation }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:18px">
-          <p style="margin:0 0 10px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Benchmark proof / unseen trajectories</p>
-          <h1 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Measured against<br><span style="color:#b7c6cd">what came before.</span></h1>
-          <p style="margin:0 0 6px;color:#b7c6cd;font-size:12px;max-width:560px;line-height:1.6">Scenario-separated testing compares basic rules, ML-only detection and ASTRA's hybrid physical evidence system.</p>
+          <p style="margin:0 0 10px;color:var(--fg-muted);font:11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase">Benchmark proof</p>
+          <h1 style="margin:0 0 4px;font-family:var(--display);font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.03em">Measured against<br><span style="color:var(--fg-dim)">what came before</span></h1>
+          <p style="margin:0 0 6px;color:var(--fg-muted);font-size:14px;max-width:560px;line-height:1.6">Scenario-separated testing compares basic rules, ML-only detection and ASTRA's hybrid physical evidence system.</p>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
             <sc-for list="{{ models }}" as="m" hint-placeholder-count="3">
-              <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:22px">
-                <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">{{ m.tag }}</span>
-                <h3 style="margin:8px 0 14px;font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:500">{{ m.name }}</h3>
-                <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:16px"><strong style="font-family:'Instrument Sans',sans-serif;font-size:30px;font-weight:500;color:{{ m.color }}">{{ m.f1 }}</strong><span style="color:#71858f;font-size:10px">F1 SCORE</span></div>
+              <div class="panel" style="padding:22px">
+                <span class="label-micro">{{ m.tag }}</span>
+                <h3 style="margin:8px 0 14px;font-family:var(--display);font-size:15px;font-weight:500">{{ m.name }}</h3>
+                <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px"><strong class="metric" style="color:var(--fg)">{{ m.f1 }}</strong><span class="label-micro">F1 score</span></div><i class="meter" style="margin-bottom:16px"><b style="width:{{ m.f1 }}%"></b></i>
                 <div style="display:flex;flex-direction:column;gap:8px">
-                  <div style="display:flex;justify-content:space-between;font-size:10px;color:#b7c6cd"><span>Accuracy</span><span>{{ m.acc }}</span></div>
-                  <div style="display:flex;justify-content:space-between;font-size:10px;color:#b7c6cd"><span>Precision</span><span>{{ m.prec }}</span></div>
-                  <div style="display:flex;justify-content:space-between;font-size:10px;color:#b7c6cd"><span>Recall</span><span>{{ m.rec }}</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--fg-muted)"><span>Accuracy</span><span>{{ m.acc }}</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--fg-muted)"><span>Precision</span><span>{{ m.prec }}</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--fg-muted)"><span>Recall</span><span>{{ m.rec }}</span></div>
                 </div>
               </div>
             </sc-for>
           </div>
-          <div style="border:1px solid rgba(32,55,67,.12);border-radius:14px;background:#0b141b;padding:24px;display:flex;align-items:center;justify-content:space-between;gap:20px">
+          <div class="panel" style="padding:24px;display:flex;align-items:center;justify-content:space-between;gap:20px">
             <div>
-              <span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">KEY FINDING</span>
-              <h2 style="margin:8px 0 6px;font-family:'Instrument Sans',sans-serif;font-size:18px;font-weight:500">Bad GNSS ≠ spoofing.</h2>
-              <span style="color:#b7c6cd;font-size:12px">ASTRA preserves degraded but genuine navigation without escalating it as an attack.</span>
+              <span class="label-micro">KEY FINDING</span>
+              <h2 style="margin:8px 0 6px;font-family:var(--display);font-size:18px;font-weight:500">Bad GNSS ≠ spoofing</h2>
+              <span style="color:var(--fg-muted);font-size:14px">ASTRA preserves degraded but genuine navigation without escalating it as an attack.</span>
             </div>
             <div style="text-align:right;flex:none">
-              <strong style="display:block;font-family:'Instrument Sans',sans-serif;font-size:28px;font-weight:500;color:#5795f5">0.0%</strong>
-              <span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">FALSE POSITIVE RATE</span>
+              <strong style="display:block;font-family:var(--display);font-size:28px;font-weight:500;color:var(--accent)">0.0%</strong>
+              <span class="label-micro">FALSE POSITIVE RATE</span>
             </div>
           </div>
         </div>
       </sc-if>
     </main>
 
-    <sc-if value="{{ showFeedDock }}" hint-placeholder-val="{{ true }}">
-      <footer style="flex:none;display:flex;align-items:center;gap:16px;padding:0 24px;height:56px;border-top:1px solid rgba(32,55,67,.12);background:#030609">
-        <div style="display:flex;flex-direction:column;gap:2px">
-          <span style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">ACTIVE FEED</span>
-          <strong style="font-size:11px">{{ scenarioName }}</strong>
-        </div>
-        <select value="{{ scenarioSelectValue }}" onChange="{{ onSelectDockScenario }}" style="height:30px;background:#0b141b;border:1px solid rgba(32,55,67,.16);border-radius:6px;color:#b7c6cd;font-size:10px;padding:0 8px;font-family:inherit">
-          <sc-for list="{{ scenarioOptions }}" as="opt" hint-placeholder-count="6">
-            <option value="{{ opt.id }}">{{ opt.name }}</option>
-          </sc-for>
-        </select>
-        <button onClick="{{ onReset }}" style="height:30px;padding:0 12px;border-radius:6px;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;font-size:10px;cursor:pointer">Reset</button>
-        <button onClick="{{ onTogglePlay }}" style="height:30px;padding:0 14px;border-radius:6px;border:none;background:linear-gradient(90deg,#1f3f73,#5795f5);color:#030609;font-size:10px;font-weight:600;cursor:pointer">{{ playLabel }}</button>
-        <button onClick="{{ onNext }}" style="height:30px;padding:0 12px;border-radius:6px;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;font-size:10px;cursor:pointer">Next epoch</button>
-        <div style="flex:1;display:flex;align-items:center;gap:10px">
-          <i style="flex:1;height:4px;border-radius:4px;background:rgba(32,55,67,.1);display:block;overflow:hidden"><b style="display:block;height:100%;width:{{ dockProgress }}%;background:#5795f5"></b></i>
-          <span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">{{ epochLabel }}</span>
-        </div>
-      </footer>
-    </sc-if>
   </div>
 
   <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ onCloseDialog }}" style="position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:50">
-      <div onClick="{{ stopPropagation }}" style="width:420px;max-width:90vw;border:1px solid rgba(32,55,67,.16);border-radius:12px;background:#0b141b;padding:26px;position:relative">
-        <button onClick="{{ onCloseDialog }}" style="position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;border:1px solid rgba(32,55,67,.16);background:transparent;color:#b7c6cd;cursor:pointer;font-size:11px">×</button>
+      <div onClick="{{ stopPropagation }}" style="width:{{ dialogWidth }}px;max-width:90vw;max-height:86vh;overflow:auto;border:1px solid var(--hairline);border-radius:12px;background:var(--card);padding:26px;position:relative">
+        <button onClick="{{ onCloseDialog }}" style="position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;border:1px solid var(--hairline);background:transparent;color:var(--fg-muted);cursor:pointer;font-size:13px">×</button>
 
         <sc-if value="{{ isWhyDialog }}" hint-placeholder-val="{{ false }}">
-          <p style="margin:0 0 8px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">WHY TRUST CHANGED</p>
-          <h2 style="margin:0 0 16px;font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:500">{{ whyTitle }}</h2>
+          <p style="margin:0 0 8px;color:var(--fg-muted);font:11px/1 var(--mono);letter-spacing:.1em">WHY TRUST CHANGED</p>
+          <h2 style="margin:0 0 16px;font-family:var(--display);font-size:17px;font-weight:500">{{ whyTitle }}</h2>
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-            <span style="color:#71858f;font:11px/1 'IBM Plex Mono',monospace">{{ whyPrevState }}</span><span style="color:#71858f">→</span><strong style="font:11px/1 'IBM Plex Mono',monospace;color:{{ curColor }}">{{ whyCurState }}</strong>
+            <span class="label-micro">{{ whyPrevState }}</span><span style="color:var(--fg-muted)">→</span><strong style="font:13px/1 var(--mono);color:{{ curColor }}">{{ whyCurState }}</strong>
           </div>
-          <p style="margin:0 0 16px;color:#b7c6cd;font-size:12px;line-height:1.6">{{ whyConclusion }}</p>
-          <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid rgba(32,55,67,.12);padding-top:14px">
-            <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">PREVIOUS SCORE</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ whyPrevScore }}</dd></div>
-            <div><dt style="color:#71858f;font:7px/1 'IBM Plex Mono',monospace">CURRENT SCORE</dt><dd style="margin:4px 0 0;font:11px/1 'IBM Plex Mono',monospace">{{ curScore }}</dd></div>
+          <p style="margin:0 0 16px;color:var(--fg-muted);font-size:14px;line-height:1.6">{{ whyConclusion }}</p>
+          <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--hairline);padding-top:14px">
+            <div><dt class="label-micro">PREVIOUS SCORE</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ whyPrevScore }}</dd></div>
+            <div><dt class="label-micro">CURRENT SCORE</dt><dd style="margin:4px 0 0;font:13px/1 var(--mono)">{{ curScore }}</dd></div>
           </dl>
         </sc-if>
 
-        <sc-if value="{{ isGuideDialog }}" hint-placeholder-val="{{ false }}">
-          <p style="margin:0 0 8px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">THREE-MINUTE DEMO</p>
-          <h2 style="margin:0 0 16px;font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:500">Show the decision changing.</h2>
-          <ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px">
-            <li style="display:flex;gap:10px;align-items:baseline"><span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">01</span><span style="font-size:12px;color:#b7c6cd">Establish the normal baseline — play Normal Navigation and show convergent evidence.</span></li>
-            <li style="display:flex;gap:10px;align-items:baseline"><span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">02</span><span style="font-size:12px;color:#b7c6cd">Separate degradation from attack — GNSS Degradation shows weak geometry is not spoofing.</span></li>
-            <li style="display:flex;gap:10px;align-items:baseline"><span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">03</span><span style="font-size:12px;color:#b7c6cd">Expose a coordinate jump — watch trust cross the quarantine boundary.</span></li>
-            <li style="display:flex;gap:10px;align-items:baseline"><span style="color:#71858f;font:9px/1 'IBM Plex Mono',monospace">04</span><span style="font-size:12px;color:#b7c6cd">Verify the audit chain in Forensics.</span></li>
-          </ol>
-        </sc-if>
+        <sc-if value="{{ isHelpDialog }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0 0 8px;color:var(--fg-muted);font:11px/1 var(--mono);letter-spacing:.1em">HELP</p>
+          <h2 style="margin:0 0 8px;font-family:var(--display);font-size:19px;font-weight:500">Trust is evidence, not a label.</h2>
+          <p style="margin:0 0 22px;color:var(--fg-muted);font-size:13px;line-height:1.55;max-width:52ch">ASTRA fuses kinematic, physical and ML evidence into a single trust score, and keeps every decision traceable back to the checks that produced it.</p>
 
-        <sc-if value="{{ isMethodDialog }}" hint-placeholder-val="{{ false }}">
-          <p style="margin:0 0 8px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">METHODOLOGY</p>
-          <h2 style="margin:0 0 16px;font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:500">Trust is evidence, not a label.</h2>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">01 · INGESTION</span><p style="margin:4px 0 0;font-size:11px;color:#b7c6cd">CSV, NMEA and normalized observations are validated before they enter the decision pipeline.</p></div>
-            <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">02 · PHYSICAL EVIDENCE</span><p style="margin:4px 0 0;font-size:11px;color:#b7c6cd">Kinematic, temporal, geometric and carrier-level checks declare both their thresholds and availability.</p></div>
-            <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">03 · FUSION</span><p style="margin:4px 0 0;font-size:11px;color:#b7c6cd">Available evidence is weighted into trust and confidence without presenting unavailable data as proof.</p></div>
-            <div><span style="color:#71858f;font:8px/1 'IBM Plex Mono',monospace">04 · FORENSICS</span><p style="margin:4px 0 0;font-size:11px;color:#b7c6cd">Every decision is linked to the previous event using a SHA-256 hash chain.</p></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0">
+            <div style="padding-right:28px;min-width:0">
+              <span class="label-micro" style="color:var(--fg-dim)">IMPORT YOUR OWN DATA</span>
+              <ol style="margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px">
+                <li style="display:flex;gap:10px;align-items:baseline;min-width:0"><span class="label-micro">01</span><span style="min-width:0;overflow-wrap:anywhere;font-size:13px;color:var(--fg-muted);line-height:1.45">Click <strong style="color:var(--fg-dim)">Import telemetry</strong> in the header — choose a CSV/NMEA file, or paste rows as <code style="font:12px/1.5 var(--mono);color:var(--fg-dim)">timestamp, latitude, longitude, altitude, speed, satellite_count, hdop</code>.</span></li>
+                <li style="display:flex;gap:10px;align-items:baseline;min-width:0"><span class="label-micro">02</span><span style="min-width:0;overflow-wrap:anywhere;font-size:13px;color:var(--fg-muted);line-height:1.45">Press <strong style="color:var(--fg-dim)">Analyze telemetry</strong> — ASTRA runs every row through the full pipeline and jumps to Overview with your live trust score.</span></li>
+                <li style="display:flex;gap:10px;align-items:baseline;min-width:0"><span class="label-micro">03</span><span style="min-width:0;overflow-wrap:anywhere;font-size:13px;color:var(--fg-muted);line-height:1.45">Scrub through the epochs on Overview and check <strong style="color:var(--fg-dim)">Evidence</strong> for the per-check breakdown behind each score.</span></li>
+                <li style="display:flex;gap:10px;align-items:baseline;min-width:0"><span class="label-micro">04</span><span style="min-width:0;overflow-wrap:anywhere;font-size:13px;color:var(--fg-muted);line-height:1.45">Open <strong style="color:var(--fg-dim)">Forensics</strong> and confirm the hash chain stayed VALID across your import.</span></li>
+              </ol>
+            </div>
+            <div style="padding-left:28px;border-left:1px solid var(--hairline);min-width:0">
+              <span class="label-micro" style="color:var(--fg-dim)">HOW IT WORKS</span>
+              <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
+                <div><span class="label-micro">01 · INGESTION</span><p style="margin:4px 0 0;font-size:13px;color:var(--fg-muted);line-height:1.45">CSV, NMEA and normalized observations are validated before they enter the decision pipeline.</p></div>
+                <div><span class="label-micro">02 · PHYSICAL EVIDENCE</span><p style="margin:4px 0 0;font-size:13px;color:var(--fg-muted);line-height:1.45">Kinematic, temporal, geometric and carrier-level checks declare both their thresholds and availability.</p></div>
+                <div><span class="label-micro">03 · FUSION</span><p style="margin:4px 0 0;font-size:13px;color:var(--fg-muted);line-height:1.45">Available evidence is weighted into trust and confidence without presenting unavailable data as proof.</p></div>
+                <div><span class="label-micro">04 · FORENSICS</span><p style="margin:4px 0 0;font-size:13px;color:var(--fg-muted);line-height:1.45">Every decision is linked to the previous event using a SHA-256 hash chain.</p></div>
+              </div>
+            </div>
           </div>
         </sc-if>
 
         <sc-if value="{{ isImportDialog }}" hint-placeholder-val="{{ false }}">
-          <p style="margin:0 0 8px;color:#71858f;font:8px/1 'IBM Plex Mono',monospace;letter-spacing:.1em">TELEMETRY INGESTION</p>
-          <h2 style="margin:0 0 16px;font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:500">Load a verified navigation stream.</h2>
+          <p style="margin:0 0 8px;color:var(--fg-muted);font:11px/1 var(--mono);letter-spacing:.1em">TELEMETRY INGESTION</p>
+          <h2 style="margin:0 0 16px;font-family:var(--display);font-size:17px;font-weight:500">Load a verified navigation stream.</h2>
           <input id="astraFileInput" type="file" accept=".csv,.nmea,.txt,text/csv,text/plain" onChange="{{ onImportFile }}" style="display:none" />
-          <button onClick="{{ onChooseFile }}" style="width:100%;height:38px;border-radius:6px;border:1px dashed rgba(32,55,67,.24);background:transparent;color:#b7c6cd;font-size:11px;cursor:pointer;margin-bottom:10px">Choose CSV or NMEA file</button>
-          <p style="text-align:center;color:#71858f;font-size:10px;margin:0 0 10px">{{ importStatus }}</p>
-          <textarea id="astraTelemetryInput" data-dc-stable="astraTelemetryInput" value="{{ importText }}" placeholder="timestamp,latitude,longitude,altitude,speed,satellite_count,hdop" style="width:100%;height:70px;background:#030609;border:1px solid rgba(32,55,67,.16);border-radius:6px;color:#b7c6cd;font:10px/1.5 'IBM Plex Mono',monospace;padding:8px;resize:none;box-sizing:border-box"></textarea>
-          <button onClick="{{ onAnalyzeTelemetry }}" style="width:100%;height:36px;margin-top:12px;border-radius:6px;border:none;background:linear-gradient(90deg,#1f3f73,#5795f5);color:#030609;font-size:11px;font-weight:600;cursor:pointer">Analyze telemetry</button>
+          <button onClick="{{ onChooseFile }}" style="width:100%;height:38px;border-radius:6px;border:1px dashed var(--border-strong);background:transparent;color:var(--fg-muted);font-size:13px;cursor:pointer;margin-bottom:10px">Choose CSV or NMEA file</button>
+          <p style="text-align:center;color:var(--fg-muted);font-size:11px;margin:0 0 10px">{{ importStatus }}</p>
+          <textarea id="astraTelemetryInput" data-dc-stable="astraTelemetryInput" value="{{ importText }}" placeholder="timestamp,latitude,longitude,altitude,speed,satellite_count,hdop,hpl,vpl" style="width:100%;height:70px;background:var(--ground);border:1px solid var(--hairline);border-radius:6px;color:var(--fg-muted);font:11px/1.5 var(--mono);padding:8px;resize:none;box-sizing:border-box"></textarea>
+          <button onClick="{{ onAnalyzeTelemetry }}" style="width:100%;height:36px;margin-top:12px;border-radius:6px;border:none;background:var(--accent);color:var(--ground);font-size:13px;font-weight:600;cursor:pointer">Analyze telemetry</button>
         </sc-if>
       </div>
     </div>
@@ -564,29 +562,35 @@ function evidenceFor(id, score) {
     ["Doppler / range-rate", "PHYSICAL", "0.36 m/s", "RMS > 4.5 m/s", "PASS", "Carrier Doppler agrees with pseudorange change."],
     ["Pseudorange WLS", "PHYSICAL", "2.8 m", "RMS > 35 m", "PASS", "Raw ranges resolve to the reported position."],
     ["Multi-satellite consensus", "PHYSICAL", "0.91", "< 0.62", "PASS", "Independent satellite channels agree."],
-    ["Anomaly attribution", "ML", "0.08", "> 0.50", "PASS", "Observation remains inside the learned nominal manifold."]
+    ["Anomaly attribution", "ML", "0.08", "> 0.50", "PASS", "Observation remains inside the learned nominal manifold."],
+    ["Protection Level (HPL/VPL)", "PHYSICAL", "HPL 38.2 m / VPL 61.4 m", "HAL 556 m / VAL 50 m", "PASS", "Horizontal and vertical protection levels are within NavIC alert limits."]
   ];
   if (degraded && id === "gnss_degradation") {
     checks[4] = ["Pseudorange WLS", "PHYSICAL", "28.4 m", "RMS > 35 m", "WARN", "Urban multipath reduces precision while motion stays coherent."];
     checks[5] = ["Multi-satellite consensus", "PHYSICAL", "0.66", "< 0.62", "WARN", "Reduced satellite geometry limits confidence."];
+    checks[7] = ["Protection Level (HPL/VPL)", "PHYSICAL", "HPL 312.8 m / VPL 487.3 m", "HAL 556 m / VAL 50 m", "WARN", "Reduced satellite geometry inflates HPL; VPL approaching vertical alert limit."];
   }
   if (attacked || (score < 80 && id !== "gnss_degradation")) {
     if (id === "sudden_spoof") {
       checks[1] = ["Position jump", "BASIC", "3.82 km", "> 120 m / epoch", "FAIL", "Coordinate displacement is impossible at the reported speed."];
       checks[2] = ["Kinematic coherence", "BASIC", "38.6 m/s²", "> 8.0 m/s²", "FAIL", "Implied acceleration exceeds the vehicle envelope."];
+      checks[7] = ["Protection Level (HPL/VPL)", "PHYSICAL", "HPL 2841 m / VPL —", "HAL 556 m / VAL 50 m", "FAIL", "Spoofed geometry inflates HPL far beyond HAL; integrity cannot be assured."];
     } else if (id === "gradual_drift") {
       checks[2] = ["Kinematic coherence", "BASIC", "1.12 m/s²", "> 8.0 m/s²", "WARN", "Point motion appears plausible but baseline displacement accumulates."];
       checks[6] = ["Anomaly attribution", "ML", "0.78", "> 0.50", "FAIL", "Baseline displacement and manifold distance dominate attribution."];
+      checks[7] = ["Protection Level (HPL/VPL)", "PHYSICAL", "HPL 198.4 m / VPL 71.2 m", "HAL 556 m / VAL 50 m", "WARN", "VPL breaches vertical alert limit; gradual drift inflates uncertainty bounds."];
     } else if (id === "replay_meaconing") {
       checks[0] = ["Timestamp continuity", "BASIC", "0.000 s", "Δt > 2.0 s", "FAIL", "Observation time is frozen across sequential packets."];
       checks[3] = ["Doppler / range-rate", "PHYSICAL", "9.74 m/s", "RMS > 4.5 m/s", "FAIL", "Carrier motion remains stale while receiver motion continues."];
+      checks[7] = ["Protection Level (HPL/VPL)", "PHYSICAL", "UNAVAILABLE", "HAL 556 m / VAL 50 m", "FAIL", "Stale ephemeris from replayed signal renders protection level computation invalid."];
     } else if (id === "physical_inconsistency") {
       checks[3] = ["Doppler / range-rate", "PHYSICAL", "18.7 m/s", "RMS > 4.5 m/s", "FAIL", "Carrier Doppler contradicts reported range rate."];
       checks[4] = ["Pseudorange WLS", "PHYSICAL", "87.2 m", "RMS > 35 m", "FAIL", "Independent raw ranges do not resolve to the PVT fix."];
       checks[5] = ["Multi-satellite consensus", "PHYSICAL", "0.34", "< 0.62", "FAIL", "Satellite channels disagree beyond the physical envelope."];
+      checks[7] = ["Protection Level (HPL/VPL)", "PHYSICAL", "HPL 1124 m / VPL 893 m", "HAL 556 m / VAL 50 m", "FAIL", "Both HPL and VPL exceed alert limits; physical inconsistency invalidates integrity bounds."];
     }
   }
-  const weights = [0.10, 0.16, 0.14, 0.18, 0.18, 0.12, 0.12];
+  const weights = [0.09, 0.15, 0.13, 0.15, 0.15, 0.10, 0.11, 0.12];
   return checks.map(([name, category, value, threshold, status, explanation], i) => ({ name, category, value, threshold, status, explanation, weight: weights[i] }));
 }
 function buildSteps(id, count) {
@@ -617,8 +621,19 @@ function buildSteps(id, count) {
   }
   return steps;
 }
-const COLORS = { TRUSTED: "#5795f5", DEGRADED: "#d8a45c", SUSPICIOUS: "#de8767", QUARANTINED: "#e56a72", INCONCLUSIVE: "#71858f" };
-const STATUS_COLORS = { PASS: "#5795f5", WARN: "#d8a45c", FAIL: "#e56a72", UNAVAILABLE: "#71858f" };
+// Literal hex, not CSS custom properties: these also paint Leaflet canvas
+// layers, where var() cannot resolve. Kept in step with the :root tokens.
+const COLORS = { TRUSTED: "#22C55E", DEGRADED: "#FACC15", SUSPICIOUS: "#FB923C", QUARANTINED: "#F87171", INCONCLUSIVE: "#94A3B8" };
+const STATUS_COLORS = { PASS: "#22C55E", WARN: "#FACC15", FAIL: "#F87171", UNAVAILABLE: "#94A3B8" };
+// Category severity, so a GENUINE baseline stops rendering in alarm red.
+const CATEGORY_TAG = {
+  "GENUINE": "tag--ok",
+  "GENUINE DEGRADED": "tag--warn",
+  "ATTACK / SPOOF": "tag--bad",
+  "ATTACK / REPLAY": "tag--bad",
+  "PHYSICAL INCONSISTENCY": "tag--alert"
+};
+const RGB = { "#22C55E": "34,197,94", "#FACC15": "250,204,21", "#FB923C": "251,146,60", "#F87171": "248,113,113", "#94A3B8": "148,163,184" };
 
 function stepLatLon(step) {
   const index = step?.index ?? 0;
@@ -699,7 +714,7 @@ function normalizedModelSet(payload) {
   const comparison = payload?.models_comparison || {};
   const order = ["rules_baseline", "ml_only", "astra_hybrid"];
   const fallbackNames = ["Rule-based baseline", "ML-only detector", "ASTRA hybrid evidence"];
-  const colors = ["#b7c6cd", "#d8a45c", "#5795f5"];
+
   return order.map((key, index) => {
     const model = comparison[key] || {};
     const metrics = model.metrics || {};
@@ -710,7 +725,6 @@ function normalizedModelSet(payload) {
       acc: Number(metrics.accuracy ?? 0).toFixed(1),
       prec: Number(metrics.precision ?? 0).toFixed(1),
       rec: Number(metrics.recall ?? 0).toFixed(1),
-      color: colors[index]
     };
   });
 }
@@ -720,8 +734,8 @@ class Component extends DCLogic {
     view: "overview", scenarioId: "normal_nav", steps: buildSteps("normal_nav", 25),
     currentIndex: 0, playing: false, evidenceFilter: "ALL", expandedEvidence: -1,
     expandedEvent: -1, incidentStatuses: {}, selectedIncident: null,
-    mode: "operator", helpOpen: false, dialogOpen: null, speed: 1,
-    online: false, connectionLabel: "CHECKING CORE", connectionColor: "#71858f",
+    mode: "operator", dialogOpen: null, speed: 1,
+    online: false, connectionLabel: "CHECKING CORE", connectionColor: COLORS.INCONCLUSIVE,
     sourceLabel: "LOCAL SIMULATION", utcLabel: "--:--:--", feedName: "Normal Navigation",
     importText: "", importType: "csv", importStatus: "or paste telemetry below",
     ledgerEvents: [], models: null
@@ -731,11 +745,11 @@ class Component extends DCLogic {
 
   navConfig = [
     { id: "overview", label: "Overview" },
-    { id: "scenario", label: "Scenario lab" },
+    { id: "evaluation", label: "Evaluation" },
     { id: "evidence", label: "Evidence" },
     { id: "incident", label: "Incident Watch" },
     { id: "forensics", label: "Forensics" },
-    { id: "evaluation", label: "Evaluation" }
+    { id: "scenario", label: "Scenario lab" }
   ];
 
   titleFor(id) {
@@ -749,7 +763,12 @@ class Component extends DCLogic {
         this.setState({ incidentStatuses: { ...this.state.incidentStatuses, ...saved } });
       }
     } catch (_) {}
-    const tickClock = () => this.setState({ utcLabel: new Date().toISOString().slice(11, 19) });
+    const tickClock = () => {
+      const label = new Date().toISOString().slice(11, 19);
+      this.state = { ...this.state, utcLabel: label };
+      const clockEl = document.getElementById("astraUtcClock");
+      if (clockEl) clockEl.textContent = `UTC ${label}`;
+    };
     tickClock();
     this._clock = window.setInterval(tickClock, 1000);
     this.loadScenario("normal_nav");
@@ -883,13 +902,13 @@ class Component extends DCLogic {
       if (!steps.length) throw new Error("The analysis service returned no telemetry epochs.");
       this.setState({
         steps, currentIndex: 0, online: true, connectionLabel: "CORE CONNECTED",
-        connectionColor: "#5795f5", sourceLabel: "CORE SIMULATION",
+        connectionColor: COLORS.TRUSTED, sourceLabel: "CORE SIMULATION",
         feedName: scenario.name
       });
     } catch (error) {
       this.setState({
         steps: fallback, online: false, connectionLabel: "DEMO MODE",
-        connectionColor: "#71858f", sourceLabel: "LOCAL SIMULATION"
+        connectionColor: COLORS.INCONCLUSIVE, sourceLabel: "LOCAL SIMULATION"
       });
     }
   }
@@ -898,9 +917,9 @@ class Component extends DCLogic {
     this.setState({ view: "forensics" });
     try {
       const payload = await fetchJSON("/api/forensics", {}, 6000);
-      this.setState({ ledgerEvents: Array.isArray(payload.events) ? payload.events : [], online: true, connectionLabel: "CORE CONNECTED", connectionColor: "#5795f5" });
+      this.setState({ ledgerEvents: Array.isArray(payload.events) ? payload.events : [], online: true, connectionLabel: "CORE CONNECTED", connectionColor: COLORS.TRUSTED });
     } catch (_) {
-      this.setState({ online: false, connectionLabel: "DEMO MODE", connectionColor: "#71858f" });
+      this.setState({ online: false, connectionLabel: "DEMO MODE", connectionColor: COLORS.INCONCLUSIVE });
     }
   }
 
@@ -909,9 +928,9 @@ class Component extends DCLogic {
     if (this.state.models) return;
     try {
       const payload = await fetchJSON("/api/evaluation", {}, 30000);
-      this.setState({ models: normalizedModelSet(payload), online: true, connectionLabel: "CORE CONNECTED", connectionColor: "#5795f5" });
+      this.setState({ models: normalizedModelSet(payload), online: true, connectionLabel: "CORE CONNECTED", connectionColor: COLORS.TRUSTED });
     } catch (_) {
-      this.setState({ online: false, connectionLabel: "DEMO MODE", connectionColor: "#71858f" });
+      this.setState({ online: false, connectionLabel: "DEMO MODE", connectionColor: COLORS.INCONCLUSIVE });
     }
   }
 
@@ -943,12 +962,12 @@ class Component extends DCLogic {
       if (!steps.length) throw new Error("No valid telemetry rows were found.");
       this.setState({
         steps, currentIndex: 0, playing: false, view: "overview", dialogOpen: null,
-        online: true, connectionLabel: "CORE CONNECTED", connectionColor: "#5795f5",
+        online: true, connectionLabel: "CORE CONNECTED", connectionColor: COLORS.TRUSTED,
         sourceLabel: "UPLOADED DATA", feedName: "Imported telemetry", ledgerEvents: [],
         importStatus: "Telemetry verified and analyzed."
       });
     } catch (error) {
-      this.setState({ importStatus: error.name === "AbortError" ? "Analysis timed out." : error.message, online: false, connectionLabel: "DEMO MODE", connectionColor: "#71858f" });
+      this.setState({ importStatus: error.name === "AbortError" ? "Analysis timed out." : error.message, online: false, connectionLabel: "DEMO MODE", connectionColor: COLORS.INCONCLUSIVE });
     }
   }
 
@@ -1002,20 +1021,11 @@ class Component extends DCLogic {
       const active = item.id === view;
       return {
         label: item.label, badge: item.id === "incident" && openIncidentCountForNav > 0 ? String(openIncidentCountForNav) : null,
+        badgeLabel: `${openIncidentCountForNav} open incident${openIncidentCountForNav === 1 ? "" : "s"}`,
         onClick: () => item.id === "forensics" ? this.loadForensics() : item.id === "evaluation" ? this.loadEvaluation() : this.setState({ view: item.id }),
-        style: `position:relative;height:34px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:6px;border:none;width:100%;text-align:left;cursor:pointer;font-size:11px;font-weight:500;font-family:inherit;color:${active ? "#dbe5e9" : "#71858f"};background:${active ? "linear-gradient(90deg,rgba(87,149,245,.22),rgba(87,149,245,.02))" : "transparent"}`,
-        dotStyle: `width:5px;height:5px;border-radius:50%;background:${active ? "#5795f5" : "transparent"};box-shadow:${active ? "0 0 10px rgba(87,149,245,.7)" : "none"}`
+        className: `nav-item${active ? " is-active" : ""}`
       };
     });
-
-    // timeline svg path
-    const W = 600, H = 160, padX = 10, padY = 14;
-    const x = (i) => padX + (i / Math.max(1, steps.length - 1)) * (W - padX * 2);
-    const y = (score) => padY + (100 - score) / 100 * (H - padY * 2);
-    const pts = steps.map((st, i) => [x(i), y(st.score)]);
-    const timelinePath = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
-    const timelineArea = timelinePath + ` L${x(steps.length - 1).toFixed(1)},${H - padY} L${x(0).toFixed(1)},${H - padY} Z`;
-    const marker = pts[s.currentIndex] || pts[0];
 
     const history = steps.slice(Math.max(0, s.currentIndex - 19), s.currentIndex + 1);
     const sparkPath = (values, mn, mx) => {
@@ -1031,7 +1041,7 @@ class Component extends DCLogic {
     const evidenceFilters = ["ALL", "BASIC", "PHYSICAL", "ML"].map((f) => ({
       label: f === "ALL" ? "All" : f,
       onClick: () => this.setState({ evidenceFilter: f, expandedEvidence: -1 }),
-      style: `padding:6px 12px;border-radius:20px;border:1px solid ${s.evidenceFilter === f ? "rgba(87,149,245,.5)" : "rgba(32,55,67,.12)"};background:${s.evidenceFilter === f ? "rgba(87,149,245,.16)" : "transparent"};color:${s.evidenceFilter === f ? "#96c0fb" : "#71858f"};font:9px/1 'IBM Plex Mono',monospace;cursor:pointer`
+      className: `chip${s.evidenceFilter === f ? " is-active" : ""}`
     }));
     const evidenceRows = (cur?.evidence || []).filter((e) => s.evidenceFilter === "ALL" || e.category === s.evidenceFilter).map((e, i) => ({
       name: e.name, layer: e.category, value: e.value, threshold: e.threshold, weight: Number(e.weight || 0).toFixed(2) + "×",
@@ -1042,7 +1052,7 @@ class Component extends DCLogic {
     const scenarioList = SCENARIOS.map((sc, i) => ({
       num: String(i + 1).padStart(2, "0"), name: sc.name,
       onClick: () => this.setState({ scenarioId: sc.id }),
-      style: `display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid rgba(32,55,67,.12);border-radius:10px;background:${sc.id === s.scenarioId ? "rgba(87,149,245,.14)" : "transparent"};cursor:pointer;text-align:left;font-family:inherit;color:#dbe5e9`
+      className: `scenario-item${sc.id === s.scenarioId ? " is-active" : ""}`
     }));
 
     // Incidents are derived live from the currently loaded feed's forensic events —
@@ -1070,13 +1080,13 @@ class Component extends DCLogic {
     const incidents = incidentDefs.map((inc) => {
       const status = s.incidentStatuses[inc.key] || "OPEN";
       const selected = s.selectedIncident === inc.key;
-      const dotColor = status === "ACK" ? "#48c78e" : inc.severe ? "#e56a72" : "#d8a45c";
-      const rgb = dotColor === "#e56a72" ? "229,106,114" : dotColor === "#d8a45c" ? "216,164,92" : "72,199,142";
+      const dotColor = status === "ACK" ? COLORS.TRUSTED : inc.severe ? COLORS.QUARANTINED : COLORS.DEGRADED;
+      const rgb = RGB[dotColor] || RGB["#94A3B8"];
       return {
         title: inc.title, subtitle: inc.subtitle, scoreChange: inc.scoreChange, status,
         dotColor, borderColor: `rgba(${rgb},.3)`,
         pillBg: `rgba(${rgb},.08)`,
-        bg: selected ? "linear-gradient(90deg,rgba(229,106,114,.14),transparent)" : "transparent",
+        bg: selected ? `linear-gradient(90deg,rgba(${rgb},.14),transparent)` : "transparent",
         onClick: () => this.setState({ selectedIncident: inc.key })
       };
     });
@@ -1112,7 +1122,6 @@ class Component extends DCLogic {
       sourceLabel: s.sourceLabel, utcLabel: s.utcLabel,
       isOverview: view === "overview", isScenario: view === "scenario", isEvidence: view === "evidence",
       isIncident: view === "incident", isForensics: view === "forensics", isEvaluation: view === "evaluation",
-      showFeedDock: view === "overview" || view === "scenario" || view === "evidence",
 
       curColor: COLORS[cur?.state] || "#71858f", curState: cur?.state || "—", curScore: (cur?.score ?? 0).toFixed(1),
       curReason: cur?.primaryReason || "", curAction: cur?.recommendedAction || "", curConfidence: cur?.confidence ?? 0,
@@ -1120,51 +1129,49 @@ class Component extends DCLogic {
       curLat: stepLatLon(cur)[0].toFixed(6) + "°", curLon: stepLatLon(cur)[1].toFixed(6) + "°",
       curAltitude: Number(cur?.altitude ?? (215 + (cur?.index ?? 0) * 0.12)).toFixed(1) + " m", curHeading: Number(cur?.heading ?? 65.2).toFixed(1) + "°", curFix: String(cur?.fixQuality ?? 1),
       sparkTrust, sparkSpeed, sparkHdop,
-      speedOptions: [1, 2, 4].map((sp) => ({ label: sp + "×", onClick: () => this.setState({ speed: sp }), style: `height:22px;padding:0 8px;border-radius:5px;border:1px solid ${s.speed === sp ? "rgba(87,149,245,.5)" : "rgba(32,55,67,.14)"};background:${s.speed === sp ? "rgba(87,149,245,.18)" : "transparent"};color:${s.speed === sp ? "#96c0fb" : "#71858f"};font-size:9px;cursor:pointer;font-family:inherit` })),
+      speedOptions: [1, 2, 4].map((sp) => ({ label: sp + "×", onClick: () => this.setState({ speed: sp }), className: `chip${s.speed === sp ? " is-active" : ""}` })),
       onGoEvidence: () => this.setState({ view: "evidence" }),
       evidenceSnapshot: (cur?.evidence || []).slice(0, 5).map((e) => ({ name: e.name, status: e.status, color: STATUS_COLORS[e.status] })),
       scenarioName: s.feedName || scenario?.name || "", epochLabel: String(s.currentIndex).padStart(2, "0") + " / " + String(steps.length - 1).padStart(2, "0"),
       maxIndex: steps.length - 1, currentIndex: s.currentIndex,
-      timelinePath, timelineArea, timelineMarkerX: marker[0].toFixed(1), timelineMarkerY: marker[1].toFixed(1),
       mapStyleOptions: [{ id: "satellite", label: "Sat" }, { id: "dark", label: "Dark" }].map((opt) => ({
         label: opt.label,
         onClick: () => this.onSetMapStyle(opt.id),
-        style: `height:22px;padding:0 8px;border-radius:20px;border:1px solid ${this._mapStyle === opt.id ? "rgba(87,149,245,.5)" : "rgba(32,55,67,.24)"};background:${this._mapStyle === opt.id ? "rgba(87,149,245,.22)" : "rgba(3,6,9,.72)"};color:${this._mapStyle === opt.id ? "#96c0fb" : "#71858f"};font:8px/1 'IBM Plex Mono',monospace;cursor:pointer;backdrop-filter:blur(6px)`
+        className: `chip chip--overlay${this._mapStyle === opt.id ? " is-active" : ""}`
       })),
       onScrub: (e) => { window.clearInterval(this._timer); this.setState({ playing: false }); this.setStep(e.target.value); },
       onReset: () => { window.clearInterval(this._timer); this.setState({ playing: false, currentIndex: 0 }); },
       onNext: () => { window.clearInterval(this._timer); this.setState({ playing: false }); this.setStep(s.currentIndex + 1); },
+      onPrevious: () => { window.clearInterval(this._timer); this.setState({ playing: false }); this.setStep(s.currentIndex - 1); },
       onTogglePlay: () => this.togglePlay(), playLabel: s.playing ? "Pause" : "Play analysis",
 
       scenarioList, selScenarioNum: String(SCENARIOS.findIndex((sc) => sc.id === s.scenarioId) + 1).padStart(2, "0"),
-      selScenarioCategory: scenario?.category, selScenarioName: scenario?.name, selScenarioDescription: scenario?.description,
+      selScenarioCategory: scenario?.category,
+      selScenarioTagClass: CATEGORY_TAG[scenario?.category] || "tag--idle", selScenarioName: scenario?.name, selScenarioDescription: scenario?.description,
       selScenarioExpected: scenario?.expected, selScenarioTakeaway: scenario?.takeaway,
       onRunScenario: () => this.loadScenario(s.scenarioId),
 
       evidenceFilters, evidenceRows,
 
-      incidents, selIncidentTag: !selInc ? "NO ACTIVE INCIDENTS" : selInc.severe ? "CRITICAL / SELECTED" : "WARNING / SELECTED",
+      incidents, hasNoIncidents: incidents.length === 0, selIncidentTag: !selInc ? "NO ACTIVE INCIDENTS" : selInc.severe ? "CRITICAL / SELECTED" : "WARNING / SELECTED",
       selIncidentTitle: selInc?.title || "No incidents in current feed",
       selIncidentDetail: selInc?.detail || "This feed has not produced any suspicious or quarantined epochs.",
       selIncidentStream: selInc?.stream || "—", selIncidentEpoch: selInc?.epoch || "—", selIncidentLayer: selInc?.layer || "—",
       selIncidentHash: selInc?.hash || "—", selIncidentAction: selInc?.action || "Continue monitoring",
-      incidentOpenCount, incidentAckCount, incidentCriticalCount, incidentWarningCount,
+      incidentOpenCount, incidentOpenCountColor: incidentOpenCount ? "var(--quarantined)" : "var(--fg-muted)", incidentAckCount, incidentAckCountColor: incidentAckCount ? "var(--degraded)" : "var(--fg-muted)", incidentCriticalCount, incidentCriticalCountColor: incidentCriticalCount ? "var(--quarantined)" : "var(--fg-muted)", incidentWarningCount, incidentWarningCountColor: incidentWarningCount ? "var(--degraded)" : "var(--fg-muted)",
       incidentFeedSummary: `${s.feedName || "Current feed"} · ${steps.length} epoch${steps.length === 1 ? "" : "s"} scanned`,
       ackButtonLabel: !selInc ? "No incident" : selStatus === "ACK" ? "Acknowledged" : "Acknowledge",
-      ackButtonBg: selStatus === "ACK" ? "rgba(216,164,92,.2)" : "linear-gradient(90deg,#1f3f73,#5795f5)",
+      ackButtonClass: `btn ${selStatus === "ACK" ? "btn--ghost" : "btn--primary"}`,
       onAcknowledge: () => this.acknowledgeIncident(selectedKey),
       onViewIncidentEvidence: () => this.viewIncidentEvidence(selInc?.stepIndex ?? 0),
 
       eventCount: ledgerSource.length, lastSequence: String(ledgerSource.length).padStart(4, "0"), ledgerRows,
 
-      operatorModeStyle: `height:24px;padding:0 10px;border-radius:14px;border:none;font-size:9px;cursor:pointer;font-family:inherit;background:${s.mode === "operator" ? "#5795f5" : "transparent"};color:${s.mode === "operator" ? "#030609" : "#71858f"}`,
-      forensicModeStyle: `height:24px;padding:0 10px;border-radius:14px;border:none;font-size:9px;cursor:pointer;font-family:inherit;background:${s.mode === "forensic" ? "#5795f5" : "transparent"};color:${s.mode === "forensic" ? "#030609" : "#71858f"}`,
+      operatorModeClass: `seg__btn${s.mode === "operator" ? " is-active" : ""}`,
+      forensicModeClass: `seg__btn${s.mode === "forensic" ? " is-active" : ""}`,
       onSetOperatorMode: () => this.setState({ mode: "operator" }),
       onSetForensicMode: () => this.setState({ mode: "forensic" }),
-      helpOpen: s.helpOpen,
-      onToggleHelp: () => this.setState({ helpOpen: !s.helpOpen }),
-      onOpenGuide: () => this.setState({ helpOpen: false, dialogOpen: "guide" }),
-      onOpenMethod: () => this.setState({ helpOpen: false, dialogOpen: "method" }),
+      onOpenHelp: () => this.setState({ dialogOpen: "help" }),
       onOpenImport: () => this.setState({ dialogOpen: "import" }),
       onOpenWhy: () => this.setState({ dialogOpen: "why" }),
       onCloseDialog: () => this.setState({ dialogOpen: null }),
@@ -1173,22 +1180,18 @@ class Component extends DCLogic {
       onChooseFile: () => document.getElementById("astraFileInput")?.click(),
       onImportFile: (event) => this.importFile(event),
       onAnalyzeTelemetry: () => this.analyzeTelemetry(),
-      dialogOpen: !!s.dialogOpen, isWhyDialog: s.dialogOpen === "why", isGuideDialog: s.dialogOpen === "guide",
-      isMethodDialog: s.dialogOpen === "method", isImportDialog: s.dialogOpen === "import",
+      dialogOpen: !!s.dialogOpen, isWhyDialog: s.dialogOpen === "why", isHelpDialog: s.dialogOpen === "help",
+      isImportDialog: s.dialogOpen === "import",
+      dialogWidth: s.dialogOpen === "help" ? 640 : 420,
       whyTitle: cur?.index > 0 && steps[cur.index - 1]?.state !== cur?.state ? "The decision boundary changed." : "Trust remains inside its current state.",
       whyPrevState: cur?.index > 0 ? steps[cur.index - 1].state : "—", whyCurState: cur?.state,
       whyPrevScore: cur?.index > 0 ? steps[cur.index - 1].score.toFixed(1) : "—",
       whyConclusion: cur?.index > 0 && steps[cur.index - 1]?.state !== cur?.state ? `Trust changed because ${cur.primaryReason}` : "No material trust-state transition at this epoch.",
 
-      scenarioOptions: SCENARIOS.map((sc) => ({ id: sc.id, name: sc.name })),
-      scenarioSelectValue: s.scenarioId,
-      onSelectDockScenario: (e) => this.loadScenario(e.target.value),
-      dockProgress: (s.currentIndex / Math.max(1, steps.length - 1) * 100).toFixed(1),
-
       models: s.models || [
-        { tag: "MODEL 01", name: "Rule-based baseline", f1: "66.7", acc: "66.7", prec: "100.0", rec: "50.0", color: "#b7c6cd" },
-        { tag: "MODEL 02", name: "ML-only detector", f1: "88.9", acc: "83.3", prec: "80.0", rec: "100.0", color: "#d8a45c" },
-        { tag: "MODEL 03", name: "ASTRA hybrid evidence", f1: "100.0", acc: "100.0", prec: "100.0", rec: "100.0", color: "#5795f5" }
+        { tag: "MODEL 01", name: "Rule-based baseline", f1: "66.7", acc: "66.7", prec: "100.0", rec: "50.0" },
+        { tag: "MODEL 02", name: "ML-only detector", f1: "88.9", acc: "83.3", prec: "80.0", rec: "100.0" },
+        { tag: "MODEL 03", name: "ASTRA hybrid evidence", f1: "100.0", acc: "100.0", prec: "100.0", rec: "100.0" }
       ]
     };
   }

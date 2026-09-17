@@ -1,0 +1,138 @@
+/* Mission Control component layer. Tokens live in main.html's <helmet> block so
+   they stay available to the inline styles that remain. Scoped to
+   #missionControlShell to keep clear of the Leaflet overrides, which are
+   all !important. */
+
+#missionControlShell{font-family:var(--text);color:var(--fg)}
+#missionControlShell :focus-visible{outline:2px solid var(--border-strong);outline-offset:2px;border-radius:var(--r-control)}
+
+/* Panel — the card shell repeated 13 times across the six views. */
+#missionControlShell .panel{border:1px solid var(--hairline);border-radius:var(--r-panel);background:var(--card)}
+#missionControlShell .panel--pad{padding:16px}
+#missionControlShell .panel--clip{overflow:hidden}
+
+#missionControlShell .panel__head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 18px;border-bottom:1px solid var(--hairline)}
+#missionControlShell .panel__title{margin:0;color:var(--fg);font:500 13px/1.2 var(--text);letter-spacing:.01em}
+
+/* Mono micro-label — 69 sites, floor raised from 7-8px to 11px. */
+#missionControlShell .label-micro{color:var(--fg-muted);font:500 11px/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+
+#missionControlShell .readout{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:14px;border-top:1px solid var(--hairline);padding-top:14px}
+#missionControlShell .readout__key{color:var(--fg-muted);font:500 11px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase}
+#missionControlShell .readout__val{margin:5px 0 0;color:var(--fg);font:400 13px/1.3 var(--mono);font-variant-numeric:tabular-nums}
+
+/* Buttons. The primary was a left-to-right gradient behind near-black text,
+   measuring 1.95:1 at the dark end; a solid accent gives 9.18:1. */
+#missionControlShell .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:32px;padding:0 14px;border-radius:var(--r-control);font:500 13px/1 var(--text);font-family:var(--text);cursor:pointer;transition:background .2s ease,border-color .2s ease,color .2s ease}
+#missionControlShell .btn--primary{border:0;background:var(--accent);color:var(--on-accent);font-weight:600}
+#missionControlShell .btn--primary:hover{background:var(--accent-hover)}
+#missionControlShell .btn--ghost{border:1px solid var(--hairline);background:transparent;color:var(--fg-muted)}
+#missionControlShell .btn--ghost:hover{border-color:var(--border-strong);color:var(--fg)}
+#missionControlShell .btn--icon{min-width:32px;padding:0 8px}
+
+#missionControlShell .tag{display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:0 10px;border:1px solid currentColor;border-radius:var(--r-pill);font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+#missionControlShell .tag--ok{color:var(--trusted)}
+#missionControlShell .tag--warn{color:var(--degraded)}
+#missionControlShell .tag--alert{color:var(--suspicious)}
+#missionControlShell .tag--bad{color:var(--quarantined)}
+#missionControlShell .tag--idle{color:var(--fg-muted)}
+
+#missionControlShell .dot{width:8px;height:8px;border-radius:50%;flex:none}
+#missionControlShell .meter{flex:1;display:block;height:5px;border-radius:var(--r-pill);background:var(--muted-surface);overflow:hidden}
+#missionControlShell .meter>b{display:block;height:100%;background:var(--accent)}
+
+/* Chip — filter / speed / map-style toggles, raised to a 26px hit target. */
+#missionControlShell .chip{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:0 11px;border:1px solid var(--hairline);border-radius:var(--r-pill);background:transparent;color:var(--fg-muted);font:500 11px/1 var(--mono);letter-spacing:.06em;cursor:pointer;transition:border-color .2s ease,background .2s ease,color .2s ease}
+#missionControlShell .chip:hover{border-color:var(--border-strong);color:var(--fg)}
+#missionControlShell .chip.is-active{border-color:var(--accent);background:rgba(226,232,240,.14);color:var(--accent)}
+
+#missionControlShell .nav-item{position:relative;height:36px;display:flex;align-items:center;gap:10px;padding:0 10px;border:0;border-radius:var(--r-control);width:100%;text-align:left;cursor:pointer;background:transparent;color:var(--fg-muted);font:500 13px/1 var(--text);font-family:var(--text);transition:background .2s ease,color .2s ease}
+#missionControlShell .nav-item:hover{color:var(--fg);background:rgba(255,255,255,.04)}
+#missionControlShell .nav-item.is-active{color:var(--fg);background:linear-gradient(90deg,rgba(226,232,240,.14),rgba(226,232,240,.02))}
+#missionControlShell .nav-item__dot{width:5px;height:5px;border-radius:50%;flex:none;background:transparent}
+#missionControlShell .nav-item.is-active .nav-item__dot{background:var(--accent);box-shadow:0 0 10px rgba(226,232,240,.55)}
+#missionControlShell .nav-item__badge{margin-left:auto;padding:2px 7px;border-radius:var(--r-pill);background:var(--quarantined);color:var(--on-accent);font:600 11px/1.3 var(--mono)}
+
+#missionControlShell .seg{display:flex;border:1px solid var(--hairline);border-radius:var(--r-pill);padding:2px}
+#missionControlShell .seg__btn{min-height:26px;padding:0 12px;border:0;border-radius:var(--r-pill);background:transparent;color:var(--fg-muted);font:500 12px/1 var(--text);font-family:var(--text);cursor:pointer;transition:background .2s ease,color .2s ease}
+#missionControlShell .seg__btn.is-active{background:var(--accent);color:var(--on-accent);font-weight:600}
+
+#missionControlShell .data-row{display:grid;align-items:center;gap:16px;padding:13px 18px;border:0;border-bottom:1px solid var(--hairline);width:100%;text-align:left;cursor:pointer;background:transparent;font-family:var(--text);transition:background .2s ease}
+#missionControlShell .data-row:hover{background:rgba(255,255,255,.03)}
+#missionControlShell .data-row__name{color:var(--fg);font:500 13px/1.3 var(--text)}
+#missionControlShell .data-row__val{color:var(--fg-muted);font:400 13px/1.3 var(--mono);font-variant-numeric:tabular-nums}
+#missionControlShell .data-row__status{font:500 11px/1 var(--mono);letter-spacing:.1em}
+#missionControlShell .data-head{display:grid;align-items:center;gap:16px;padding:12px 18px;border-bottom:1px solid var(--hairline);color:var(--fg-muted);font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase}
+#missionControlShell .data-drawer{padding:16px 18px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--hairline);color:var(--fg-muted);font-size:13px;line-height:1.6}
+
+#missionControlShell .view-eyebrow{margin:0 0 10px;color:var(--fg-muted);font:500 11px/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+#missionControlShell .view-title{margin:0;font-family:var(--display);font-size:26px;font-weight:500;line-height:1.1;letter-spacing:-.02em;color:var(--fg)}
+#missionControlShell .view-title span{color:var(--fg-muted)}
+#missionControlShell .view-lede{margin:0;max-width:70ch;color:var(--fg-muted);font-size:14px;line-height:1.6}
+#missionControlShell .metric{font-family:var(--display);font-size:32px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums}
+
+/* Empty state — the incident feed shows one whenever a feed produces no
+   suspicious or quarantined epochs, which the default feed never does. */
+#missionControlShell .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:48px 24px;text-align:center}
+#missionControlShell .empty__title{color:var(--fg);font:500 14px/1.4 var(--text)}
+#missionControlShell .empty__body{margin:0;color:var(--fg-muted);font-size:13px;line-height:1.6;max-width:42ch}
+
+@media (prefers-reduced-motion:reduce){#missionControlShell *{transition:none!important}}
+
+/* Scenario rail item. */
+#missionControlShell .scenario-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--hairline);border-radius:var(--r-panel);background:transparent;color:var(--fg);font:400 13px/1.3 var(--text);font-family:var(--text);text-align:left;cursor:pointer;transition:border-color .2s ease,background .2s ease}
+#missionControlShell .scenario-item:hover{border-color:var(--border-strong)}
+#missionControlShell .scenario-item.is-active{border-color:var(--accent);background:rgba(226,232,240,.10)}
+
+/* Chip variant that sits over the map, so it needs its own ground. */
+#missionControlShell .chip--overlay{background:rgba(2,6,23,.80);backdrop-filter:blur(6px);border-color:var(--border-strong)}
+#missionControlShell .chip--overlay.is-active{background:rgba(226,232,240,.20);border-color:var(--accent);color:var(--fg)}
+
+/* Narrow screens. The console is built for a desktop operator station: a fixed
+   210px rail plus multi-column view grids. Below 1080px the rail becomes a
+   top strip and the top-level view grids stack. Only those grids are collapsed
+   — the data-row grids inside tables keep their columns. */
+@media (max-width:1080px){
+  #missionControlShell{grid-template-columns:1fr!important;height:auto;min-height:100vh}
+  #missionControlShell>aside{height:auto;border-right:0;border-bottom:1px solid var(--hairline)}
+  #missionControlShell>aside nav{flex-direction:row!important;flex-wrap:wrap;gap:4px}
+  #missionControlShell .nav-item{width:auto}
+  #missionControlShell>div>header{height:auto!important;flex-wrap:wrap;gap:10px;padding:10px 18px!important}
+  #missionControlShell main{padding:16px 18px 20px!important}
+  #missionControlShell main>div>div[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+}
+@media (max-width:760px){
+  /* The top bar's control cluster is a single flex row of six items; let it
+     wrap rather than push the page wider than the viewport. */
+  #missionControlShell>div>header>div{flex-wrap:wrap;min-width:0}
+  #missionControlShell>div>header{row-gap:8px}
+  #missionControlShell .data-head{display:none}
+  #missionControlShell .data-row{grid-template-columns:1fr!important;gap:6px;align-items:start}
+  #missionControlShell .readout{grid-template-columns:1fr}
+}
+
+/* Each view is meant to read as one screen. The forensic ledger is the only
+   unbounded list, so it scrolls inside its own panel rather than pushing the
+   page past the viewport. */
+#missionControlShell .ledger-scroll{max-height:calc(100vh - 520px);min-height:160px;overflow-y:auto;overscroll-behavior:contain}
+#missionControlShell .ledger-scroll::-webkit-scrollbar{width:8px}
+#missionControlShell .ledger-scroll::-webkit-scrollbar-thumb{background:var(--muted-surface);border-radius:var(--r-pill)}
+#missionControlShell .ledger-scroll::-webkit-scrollbar-track{background:transparent}
+
+/* Containment. The shell is height:100vh, but grid children default to
+   min-height:auto and so refuse to shrink below their content — which pushed
+   the page past the viewport even though <main> had overflow:auto. Pinning
+   min-height:0 lets main take the overflow instead of the document. */
+#missionControlShell{overflow:hidden}
+#missionControlShell>aside,#missionControlShell>div{min-height:0}
+#missionControlShell>div{display:flex;flex-direction:column}
+#missionControlShell main{min-height:0;flex:1;overflow:auto}
+#missionControlShell main::-webkit-scrollbar{width:8px}
+#missionControlShell main::-webkit-scrollbar-thumb{background:var(--muted-surface);border-radius:var(--r-pill)}
+#missionControlShell main::-webkit-scrollbar-track{background:transparent}
+
+/* The evidence matrix is the other unbounded list. */
+#missionControlShell .evidence-scroll{max-height:calc(100vh - 330px);min-height:180px;overflow-y:auto;overscroll-behavior:contain}
+#missionControlShell .evidence-scroll::-webkit-scrollbar{width:8px}
+#missionControlShell .evidence-scroll::-webkit-scrollbar-thumb{background:var(--muted-surface);border-radius:var(--r-pill)}
+#missionControlShell .evidence-scroll::-webkit-scrollbar-track{background:transparent}

@@ -1,0 +1,94 @@
+/* Header and hero overlay. Sections below the sequence live in landing-instrument.css. */
+
+/* Header — a floating instrument panel inset from the viewport edges, in the
+   same frosted-glass language as the Mission Control map readout (see
+   .astra-map-readout in main.html): dark rgba fill + backdrop-filter blur,
+   never a flat/opaque surface. This is the single source of truth for
+   .topbar/.wordmark/.access-link — styles.css and landing-redesign.css no
+   longer declare these (removed to end the 3-file override chain). */
+.topbar{position:fixed;z-index:50;top:16px;left:50%;transform:translateX(-50%);width:min(calc(100% - 32px),1100px);height:60px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 10px 0 22px;border:1px solid rgba(255,255,255,.10);border-radius:16px;background:rgba(8,14,22,.62);box-shadow:0 20px 60px -12px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(20px) saturate(150%);transition:background .3s ease,border-color .3s ease,box-shadow .3s ease,backdrop-filter .3s ease}
+.topbar.is-scrolled{background:rgba(8,14,22,.82);border-color:rgba(255,255,255,.14);box-shadow:0 10px 30px -8px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(26px) saturate(160%)}
+
+.wordmark{display:inline-flex;align-items:center;gap:14px;width:max-content;color:var(--fg)}
+.wordmark img{display:block;height:24px}
+.wordmark span{position:relative;padding-left:15px;font:600 10px/1 var(--text);letter-spacing:.08em;color:var(--fg-dim)}
+.wordmark span::before{content:"";position:absolute;left:0;top:50%;width:1px;height:15px;margin-top:-7.5px;background:var(--rule-lit)}
+
+.topbar nav{display:flex;gap:4px}
+.topbar nav a{position:relative;padding:9px 15px;border-radius:10px;font-size:13px;color:var(--fg-dim);transition:color .2s ease,background .2s ease}
+.topbar nav a:hover{color:var(--fg);background:#ffffff0f}
+.topbar nav a::after{display:none}
+
+.topbar-actions{display:flex;align-items:center;gap:18px;justify-self:end}
+
+.text-link{color:var(--data);font-size:13px;font-weight:500;text-decoration:none;transition:opacity .2s ease}
+.text-link:hover{opacity:.8}
+
+.access-link{display:inline-flex;align-items:center;gap:11px;height:40px;padding:0 9px 0 18px;border:0;border-radius:10px;background:var(--data);color:#020617;font:600 13px var(--text);letter-spacing:.005em;box-shadow:0 2px 16px #E2E8F030;transition:background .2s ease,box-shadow .2s ease,transform .2s ease}
+.access-link:not(:has(span)){padding:0 18px}
+.access-link:hover{background:#FFFFFF;box-shadow:0 6px 22px #E2E8F04d;transform:translateY(-1px)}
+.access-link span{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:#0206171a;font-size:11px;line-height:1}
+
+.access-capsule{display:inline-flex;align-items:center;height:40px;padding:0 6px 0 18px;border-radius:999px;background:var(--data);box-shadow:0 2px 16px #E2E8F030;gap:0;transition:box-shadow .2s ease,transform .2s ease}
+.access-capsule:hover{box-shadow:0 6px 22px #E2E8F04d;transform:translateY(-1px)}
+.capsule-link{display:inline-flex;align-items:center;gap:6px;color:#020617;font:600 13px var(--text);letter-spacing:.005em;text-decoration:none;padding:0 4px;transition:opacity .15s}
+.capsule-link:hover{opacity:.7}
+.capsule-link span{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:#0206171a;font-size:11px;line-height:1}
+.capsule-sep{color:rgba(2,6,23,.65);font:600 14px var(--text);margin:0 6px;user-select:none}
+
+.story-copy--hero{left:max(32px,calc(50% - 660px));top:70%;width:min(720px,calc(100% - 64px));margin-left:0;text-align:left}
+.story-copy--hero h1{font:500 clamp(30px,3.2vw,46px)/1.06 var(--display);letter-spacing:-.035em;margin-inline:0;text-shadow:0 2px 32px #0009}
+.story-copy--hero>p:not(.story-eyebrow){font-size:16px;line-height:1.55;color:#d0d8e3;margin-top:16px}
+.hero-actions{display:flex;align-items:center;justify-content:flex-start;gap:22px;margin-top:28px}
+.hero-action{display:inline-flex;align-items:center;background:var(--data);color:#020617;border:0;border-radius:8px;min-height:46px;margin:0;padding:0 11px 0 20px;font:600 14px var(--text);gap:13px;box-shadow:0 2px 16px #E2E8F030;transition:background .2s ease,box-shadow .2s ease,transform .2s ease}
+.hero-action:not(:has(span)){padding:0 20px}
+.hero-action:hover{background:#FFFFFF;box-shadow:0 6px 22px #E2E8F04d;transform:translateY(-1px)}
+.hero-action span{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:#0206171a;font-size:12px;line-height:1}
+.film-shade{background:linear-gradient(180deg,#02061780,transparent 42%,#020617a6),radial-gradient(ellipse at 20% 82%,#020617aa,transparent 58%)}
+
+/* Story chapters and the closing result card. */
+.story-eyebrow{color:#c0cbd8;font:400 11px/1.5 var(--text);letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px}
+.story-copy:not(.story-copy--hero) .story-eyebrow{margin-bottom:24px}
+.story-copy:not(.story-copy--hero) h2{font-size:clamp(34px,3.6vw,56px);line-height:1.13;letter-spacing:-.04em}
+.story-result{left:max(32px,calc(50% - 660px));bottom:16vh;width:min(560px,calc(100% - 64px))}
+.story-result__score{gap:10px}
+.story-result__score strong{font-size:clamp(52px,5.6vw,84px);line-height:.86;letter-spacing:-.04em}
+.story-result__score span{margin-bottom:5px;font-size:13px}
+.story-result h2{margin-top:16px;font-size:clamp(26px,2.7vw,40px);line-height:1.1;letter-spacing:-.04em}
+.story-result>p:not(.story-eyebrow){margin-top:14px;font-size:16px;line-height:1.55}
+.scroll-cue{font:400 11px var(--text);letter-spacing:.08em;color:#c0cbd8;bottom:30px}.scroll-cue i{height:22px;opacity:.6}
+.story-progress{display:none}
+
+/* Responsive. The pill stays a pill down to phone width — no more
+   flattening to a flush bar — it just tightens its inset and drops the nav
+   row, matching the pattern .story-copy already uses elsewhere on this page. */
+@media(max-width:980px){
+  .topbar{width:calc(100% - 24px);padding:0 8px 0 18px}
+  .topbar nav{gap:2px}
+}
+@media(max-width:760px){
+  /* Two-row panel — the section links stay reachable on phones without
+     widening the pill past a comfortable inset. */
+  .topbar{top:10px;width:calc(100% - 20px);height:auto;min-height:0;padding:9px 16px 7px;border-radius:14px;grid-template-columns:1fr auto;grid-template-rows:auto auto;row-gap:6px;align-items:center}
+  .wordmark{grid-column:1;grid-row:1}
+  .wordmark span{display:none}
+  .topbar-actions{grid-column:2;grid-row:1;gap:12px}
+  .topbar nav{display:flex;grid-column:1/-1;grid-row:2;gap:2px;justify-content:flex-start;
+    margin:0 -8px;padding-top:5px;border-top:1px solid rgba(255,255,255,.08);overflow-x:auto;scrollbar-width:none}
+  .topbar nav::-webkit-scrollbar{display:none}
+  .topbar nav a{padding:7px 8px;font-size:12px;white-space:nowrap;border-radius:6px}
+  .wordmark{gap:10px}
+  .wordmark img{height:21px}
+  .text-link{font-size:11px}
+  .access-link{height:36px;font-size:12px;padding:0 7px 0 13px;gap:8px}
+  .access-link span{width:19px;height:19px;font-size:10px}
+  .story-copy--hero{left:20px;top:64%;width:calc(100% - 40px)}
+  .story-copy--hero h1{font-size:clamp(28px,7vw,38px)}
+  .story-copy--hero>p:not(.story-eyebrow){font-size:15px}
+  .hero-actions{gap:12px;flex-direction:column;align-items:stretch;margin-top:18px}
+  .hero-action{min-height:40px;justify-content:center}
+  .story-result{left:20px;bottom:14vh;width:calc(100% - 40px)}
+  .story-result__score strong{font-size:clamp(46px,11vw,64px)}
+  .story-result h2{font-size:clamp(24px,5.4vw,32px)}
+  .story-eyebrow{font-size:10px}
+}

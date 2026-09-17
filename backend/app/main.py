@@ -4,13 +4,17 @@ Exposes REST endpoints for telemetry ingestion, validation, physical-layer analy
 simulation playback, forensic ledger auditing, and scientific evaluation benchmarks.
 """
 
+from dotenv import load_dotenv
+from pathlib import Path
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
 from fastapi import FastAPI, HTTPException, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing import Dict, Any
 from pydantic import BaseModel
-from pathlib import Path
 
 from .core.schema import GNSSObservation, TrustResult, WhyTrustChanged, ForensicEvent
 from .gateway.sanitizer import InputGateway
@@ -23,6 +27,7 @@ from .forensics.memory import ForensicMemory
 from .simulation.scenarios import ScenarioGenerator
 from .evaluation.benchmark import BenchmarkEvaluator
 from .security import require_api_key, require_stream_id, settings
+from .auth import authenticate, create_token, get_current_user, AuthUser, ROLE_LEVELS
 from threading import RLock
 
 app = FastAPI(
@@ -84,6 +89,33 @@ class SingleStepAnalysisResponse(BaseModel):
     result: TrustResult
     why_trust_changed: WhyTrustChanged
     forensic_event: ForensicEvent
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+@app.post("/api/auth/login")
+def login(payload: LoginRequest):
+    """Issues a role-scoped session token for the three-tier access hierarchy
+    (employee < manager < supervisor)."""
+    role = authenticate(payload.username, payload.password)
+    if not role:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    token, expires_at = create_token(payload.username, role)
+    return {
+        "token": token,
+        "username": payload.username,
+        "role": role,
+        "level": ROLE_LEVELS[role],
+        "expires_at": expires_at,
+    }
+
+
+@app.get("/api/auth/me")
+def whoami(user: AuthUser = Depends(get_current_user)):
+    return {"username": user.username, "role": user.role, "level": user.level}
 
 
 @app.get("/api")
@@ -392,12 +424,20 @@ FRONTEND_ROOT = Path(__file__).resolve().parents[2] / "frontend"
 FRONTEND_FILES = frozenset({
     "index.html",
     "main.html",
+    "login.html",
     "terms.html",
     "styles.css",
     "landing-redesign.css",
+    "landing-refined.css",
+    "landing-instrument.css",
+    "mission-control.css",
+    "landing-motion.css",
+    "landing-motion.js",
+    "refined-theme.css",
     "tokens.css",
     "script.js",
     "support.js",
+    "auth-guard.js",
     "threeui.bundle.js",
     "favicon.svg",
 })
@@ -423,6 +463,12 @@ def serve_landing_page():
 @app.get("/main.html", include_in_schema=False)
 def serve_mission_control():
     return FileResponse(FRONTEND_ROOT / "main.html")
+
+
+@app.get("/login", include_in_schema=False)
+@app.get("/login.html", include_in_schema=False)
+def serve_login_page():
+    return FileResponse(FRONTEND_ROOT / "login.html")
 
 
 @app.get("/{filename}", include_in_schema=False)

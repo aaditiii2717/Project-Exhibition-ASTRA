@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#03070a" />
     <meta name="description" content="ASTRA evaluates GNSS observations through engineering checks, physical consistency, anomaly detection and explainable trust decisions." />
-    <title>ASTRA — Trust, from orbit to action</title>
+    <title>ASTRA — The Trust Layer for Satellite Navigation</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="assets/fonts/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="styles.css?v=18" />
+    <link rel="preload" href="assets/fonts/geist-500.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css?v=19" />
     <link rel="stylesheet" href="landing-redesign.css?v=6" />
+    <link rel="stylesheet" href="refined-theme.css?v=3" />
+    <link rel="stylesheet" href="landing-refined.css?v=14" />
+    <link rel="stylesheet" href="landing-instrument.css?v=20" />
+    <link rel="stylesheet" href="landing-motion.css?v=1" />
   </head>
   <body>
     <div class="boot" id="boot" aria-live="polite">
@@ -29,7 +32,13 @@
         <a href="#proof">Architecture</a>
         <a href="#deployment">Deployment</a>
       </nav>
-      <a class="access-link" href="main.html">Open mission control <span>↗</span></a>
+      <div class="topbar-actions">
+        <a class="access-capsule" href="login.html">
+          <span class="capsule-link">Register</span>
+          <span class="capsule-sep">/</span>
+          <span class="capsule-link">Sign In <span aria-hidden="true">↗</span></span>
+        </a>
+      </div>
     </header>
 
     <main id="top">
@@ -39,37 +48,36 @@
           <div class="film-shade" aria-hidden="true"></div>
 
           <article class="story-copy story-copy--hero is-visible" data-start="0" data-end="0.145">
-            <p class="story-eyebrow">Navigation trust layer</p>
-            <h1>Trust begins<br />above.</h1>
-            <p>Validate the signal. Test the physics.<br />Trust the decision.</p>
-            <a class="hero-action" href="#trust">Discover ASTRA <span>↓</span></a>
+            <h1>Every Signal<br />Earns Trust</h1>
+            <p>Validate the signal, test the physics<br />Trust the decision</p>
+            <div class="hero-actions"><a class="hero-action" href="#trust">Explore the system <span aria-hidden="true">↓</span></a></div>
           </article>
 
           <article class="story-copy story-copy--right" data-start="0.14" data-end="0.30">
             <p class="story-eyebrow">Earth approach</p>
-            <h2>Before data becomes intelligence, it must prove where it came from.</h2>
+            <h2>Before data becomes intelligence, it must prove its provenance</h2>
           </article>
 
           <article class="story-copy" data-start="0.295" data-end="0.46">
             <p class="story-eyebrow">Observation integrity</p>
-            <h2>One observation.<br />Multiple evidence layers.<br />One explainable decision.</h2>
+            <h2>One observation, checked against every evidence layer, becomes one decision</h2>
           </article>
 
           <article class="story-copy story-copy--right" data-start="0.455" data-end="0.63">
             <p class="story-eyebrow">Live telemetry</p>
-            <h2>Signals move at the speed of orbit. Physical verification moves with them.</h2>
+            <h2>Signals move at orbital speed — physical verification keeps pace</h2>
           </article>
 
           <article class="story-copy" data-start="0.625" data-end="0.81">
             <p class="story-eyebrow">The trust layer</p>
-            <h2>Evidence converges around every observation.</h2>
+            <h2>Evidence converges on every observation</h2>
           </article>
 
           <article class="story-result" id="storyResult">
             <p class="story-eyebrow">Decision ready</p>
             <div class="story-result__score"><strong id="resultScore">98.4</strong><span>/ 100</span></div>
-            <h2>Verified for action.</h2>
-            <p>Every claim traced. Every check explained.</p>
+            <h2>Verified for action</h2>
+            <p>Every claim traced, every check explained</p>
           </article>
 
           <div class="scroll-cue" id="scrollCue"><span>Scroll to enter orbit</span><i></i></div>
@@ -78,37 +86,42 @@
       </section>
 
       <section class="handoff" id="trust" aria-labelledby="handoff-title">
-        <div class="handoff__rail" aria-label="System handoff status">
-          <span><i></i>SEQUENCE COMPLETE</span>
-          <span>RECEIVER / RX-01</span>
-          <span>CHANNEL / GNSS-L1</span>
-          <span id="landingUtc">UTC / 12:13:29</span>
-        </div>
         <div class="shell statement reveal">
           <p class="category-label">01 / THE OPERATIONAL PROBLEM</p>
           <div class="statement__grid">
-            <h2 id="handoff-title">A coordinate can be precise.<br /><span>And still be false.</span></h2>
+            <h2 id="handoff-title">A coordinate can be precise<br /><span>And still be false</span></h2>
             <div class="statement__aside">
               <p>Modern systems act on satellite-derived position, speed and time. ASTRA asks a more important question before they do:</p>
               <strong>Can this observation be trusted?</strong>
             </div>
           </div>
         </div>
-        <div class="shell anomaly-strip reveal" aria-label="Threat indicators">
-          <article><span>01</span><strong>Signal degradation</strong><small>Quality loss without malicious intent</small></article>
-          <article><span>02</span><strong>Position spoofing</strong><small>Convincing coordinates, impossible motion</small></article>
-          <article><span>03</span><strong>Replay / meaconing</strong><small>Valid data arriving at the wrong time</small></article>
-          <article><span>04</span><strong>Physics conflict</strong><small>Navigation claims that channels cannot support</small></article>
+        <div class="shell reveal">
+          <p class="category-label">Threat register</p>
+          <ul class="anomaly-strip" aria-label="Threat categories">
+            <li><span>TR-01</span><strong>Signal degradation</strong><small>Quality loss without malicious intent</small></li>
+            <li><span>TR-02</span><strong>Position spoofing</strong><small>Convincing coordinates, impossible motion</small></li>
+            <li><span>TR-03</span><strong>Replay / meaconing</strong><small>Valid data arriving at the wrong time</small></li>
+            <li><span>TR-04</span><strong>Physics conflict</strong><small>Navigation claims that channels cannot support</small></li>
+          </ul>
         </div>
       </section>
 
       <section class="architecture" id="proof" aria-labelledby="architecture-title">
         <div class="shell architecture__intro reveal">
           <div>
-            <p class="category-label">02 / TRUST ARCHITECTURE</p>
-            <h2 id="architecture-title">Evidence before<br /><span>confidence.</span></h2>
+            <p class="category-label">02 / Trust architecture</p>
+            <h2 id="architecture-title">Evidence before<br /><span>confidence</span></h2>
           </div>
-          <p>ASTRA sits between the receiver and the systems that depend on it—testing every observation against engineering limits, physical consistency and learned anomaly patterns.</p>
+          <div>
+            <p>ASTRA sits between the receiver and the systems that depend on it—testing every observation against engineering limits, physical consistency and learned anomaly patterns.</p>
+            <div class="spec-list">
+              <div><span>Evidence layers</span><i></i><strong>04</strong></div>
+              <div><span>Decision output</span><i></i><strong>0–100 + RATIONALE</strong></div>
+              <div><span>Network required</span><i></i><strong>NO</strong></div>
+              <div><span>Audit trail</span><i></i><strong>HASH-CHAINED</strong></div>
+            </div>
+          </div>
         </div>
 
         <div class="shell trust-flow reveal" id="trustFlow" aria-label="ASTRA evidence convergence architecture">
@@ -176,7 +189,7 @@
       <section class="deployment" id="deployment" aria-labelledby="deployment-title">
         <div class="shell deployment__intro reveal">
           <p class="category-label">03 / RECEIVER-SIDE DEPLOYMENT</p>
-          <h2 id="deployment-title">Built for decisions<br /><span>made in motion.</span></h2>
+          <h2 id="deployment-title">Built for decisions<br /><span>made in motion</span></h2>
           <p>On a cargo vessel, ASTRA runs beside the navigation receiver—cross-checking GNSS against onboard context before trusted data reaches the bridge.</p>
         </div>
         <div class="shell earth-console reveal" id="earthConsole">
@@ -202,7 +215,7 @@
           <div class="deployment-flow" aria-label="Receiver-side trust flow">
             <div><span>01 / INPUTS</span><strong>GNSS / AIS / IMU</strong><small>Independent navigation context</small></div>
             <i aria-hidden="true">→</i>
-            <div class="deployment-flow__active"><span>02 / ASTRA</span><strong>VERIFY LOCALLY</strong><small>Analysis continues without internet</small></div>
+            <div class="deployment-flow__active"><span>02 / ASTRA</span><strong>VERIFICATION</strong><small>ASTRA Validated Analysis</small></div>
             <i aria-hidden="true">→</i>
             <div><span>03 / OUTPUT</span><strong>BRIDGE / AUTOPILOT</strong><small>Trusted decision support</small></div>
           </div>
@@ -211,17 +224,22 @@
 
       <section class="scenarios" id="missions" aria-labelledby="scenarios-title">
         <div class="shell scenarios__heading reveal">
-          <p class="category-label">04 / VALIDATION SCENARIOS</p>
-          <h2 id="scenarios-title">Test the system.<br /><span>Break the signal.</span></h2>
-          <p>Six deterministic missions expose ASTRA to degraded, manipulated and physically impossible navigation data.</p>
+          <div>
+            <p class="category-label">04 / Validation scenarios</p>
+            <h2 id="scenarios-title">Test the system<br /><span>Break the signal</span></h2>
+          </div>
+          <p>Six deterministic missions expose ASTRA to degraded, manipulated and physically impossible navigation data. Each runs identically every time, so results are comparable across builds.</p>
         </div>
-        <div class="shell scenario-list reveal">
-          <article><span>01</span><strong>Normal navigation</strong><small>Healthy clear-sky baseline</small><em>TRUSTED</em></article>
-          <article><span>02</span><strong>GNSS degradation</strong><small>Urban canyon without false alarm</small><em>DEGRADED</em></article>
-          <article><span>03</span><strong>Sudden spoof</strong><small>Coordinate jump detection</small><em>SUSPICIOUS</em></article>
-          <article><span>04</span><strong>Gradual drift</strong><small>Stealth displacement accumulation</small><em>SUSPICIOUS</em></article>
-          <article><span>05</span><strong>Replay / meaconing</strong><small>Frozen time and stale Doppler</small><em>QUARANTINED</em></article>
-          <article><span>06</span><strong>Physical inconsistency</strong><small>Cross-channel residual detection</small><em>SUSPICIOUS</em></article>
+        <div class="shell scenario-list reveal" role="table" aria-label="Validation scenarios and verdicts">
+          <div class="scenario-head" role="row">
+            <span role="columnheader">ID</span><span role="columnheader">Mission</span><span role="columnheader">Condition</span><span role="columnheader">Verdict</span>
+          </div>
+          <article role="row"><span role="cell">MSN-01</span><strong role="rowheader">Normal navigation</strong><small role="cell">Healthy clear-sky baseline</small><em class="tag tag--ok" role="cell">Trusted</em></article>
+          <article role="row"><span role="cell">MSN-02</span><strong role="rowheader">GNSS degradation</strong><small role="cell">Urban canyon without false alarm</small><em class="tag tag--warn" role="cell">Degraded</em></article>
+          <article role="row"><span role="cell">MSN-03</span><strong role="rowheader">Sudden spoof</strong><small role="cell">Coordinate jump detection</small><em class="tag tag--bad" role="cell">Suspicious</em></article>
+          <article role="row"><span role="cell">MSN-04</span><strong role="rowheader">Gradual drift</strong><small role="cell">Stealth displacement accumulation</small><em class="tag tag--bad" role="cell">Suspicious</em></article>
+          <article role="row"><span role="cell">MSN-05</span><strong role="rowheader">Replay / meaconing</strong><small role="cell">Frozen time and stale Doppler</small><em class="tag tag--hold" role="cell">Quarantined</em></article>
+          <article role="row"><span role="cell">MSN-06</span><strong role="rowheader">Physical inconsistency</strong><small role="cell">Cross-channel residual detection</small><em class="tag tag--bad" role="cell">Suspicious</em></article>
         </div>
       </section>
 
@@ -229,23 +247,28 @@
         <div class="closing__grid" aria-hidden="true"></div>
         <div class="shell closing__layout">
           <div class="closing__copy reveal">
-            <p class="category-label">MISSION CONTROL / READY</p>
-            <h2 id="closing-title">Know when to trust<br /><span>what comes from above.</span></h2>
+            <p class="category-label">Mission control / ready</p>
+            <h2 id="closing-title">Know when to trust<br /><span>what comes from above</span></h2>
             <p>Move from simulated telemetry to explainable navigation decisions in the ASTRA operational console.</p>
-            <a class="closing__action" href="main.html">Open mission control <span>↗</span></a>
+            <div class="closing__actions">
+              <a class="hero-action" href="login.html">Sign In <span aria-hidden="true">↗</span></a>
+              <a class="hero-action" href="login.html?mode=register">Register</a>
+              <a class="closing__link" href="#proof">Review the architecture <span aria-hidden="true">→</span></a>
+            </div>
+            <ul class="closing__strip" aria-label="System status">
+              <li class="closing__strip-live"><i aria-hidden="true"></i>Live</li>
+              <li><strong>98.4</strong><span>/ 100 composite trust</span></li>
+              <li><span>Gateway</span><b class="ok">Ready</b></li>
+              <li><span>Physics</span><b class="ok">Ready</b></li>
+              <li><span>Evidence</span><b>4 / 4</b></li>
+              <li><span>Forensic chain</span><b class="ok">Valid</b></li>
+            </ul>
           </div>
         </div>
       </section>
     </main>
-
-    <footer class="footer" aria-label="Legal and contact information">
-      <nav class="footer__links" aria-label="Footer navigation">
-        <a href="terms.html">Terms &amp; Conditions</a>
-        <a href="#contact">Contact Us</a>
-      </nav>
-      <p class="footer__rights">© 2026 ASTRA. All rights reserved.</p>
-    </footer>
     <noscript>This experience requires JavaScript to play the orbital sequence.</noscript>
-    <script defer src="script.js?v=23"></script>
+    <script defer src="script.js?v=24"></script>
+    <script defer src="landing-motion.js?v=3"></script>
   </body>
 </html>

@@ -2,3 +2,4 @@ frontend/frames/*.jpg filter=lfs diff=lfs merge=lfs -text
 frontend/frames-4k/*.jpg filter=lfs diff=lfs merge=lfs -text
 frontend/assets/brand/*.png filter=lfs diff=lfs merge=lfs -text
 backend/data/*.csv filter=lfs diff=lfs merge=lfs -text
+backend/models/*.joblib filter=lfs diff=lfs merge=lfs -text

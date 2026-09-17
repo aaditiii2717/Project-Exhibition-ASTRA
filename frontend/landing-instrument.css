@@ -1,0 +1,282 @@
+/* Instrument-panel language for every section below the opening sequence. */
+
+/* Mono face behind var(--mono), used for all labels and readouts. */
+@font-face{font-family:"Geist Mono";src:url("assets/fonts/geist-mono-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Geist Mono";src:url("assets/fonts/geist-mono-500.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap}
+
+:root{
+  --ink:#020617;          /* page ground */
+  --well:#01030D;         /* recessed: below page ground */
+  --panel:#141C2E;        /* raised panel */
+  --recess:#0A1020;       /* inset well */
+  --rule:#1b2733;         /* hairline */
+  --rule-lit:#2a3947;     /* hairline, emphasised */
+  --tick:#141e28;         /* grid marks */
+  --fg:#e2e9f1;
+  --fg-dim:#8d9cac;
+  --fg-mute:#727f8e;      /* 4.65:1 on --panel */
+  --data:#E2E8F0;
+  --ok:#22C55E;
+  --warn:#FACC15;
+  --bad:#FB923C;
+  --hold:#F87171;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,monospace;
+}
+
+body{background:var(--ink)}
+
+/* Shared language — section label, heading scale, panel and status pill. */
+
+.shell{width:min(calc(100% - 56px),1320px)}
+
+.category-label{display:flex;align-items:center;gap:12px;margin:0 0 26px;color:var(--fg-mute);font:500 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase}
+.category-label::after{flex:1;height:1px;background:linear-gradient(90deg,var(--rule),transparent);content:""}
+
+.statement h2,.architecture__intro h2,.deployment__intro h2,.scenarios__heading h2,.closing__copy h2{
+  margin:0;color:var(--fg);font-family:var(--display);font-weight:500;
+  font-size:clamp(30px,3.1vw,46px);line-height:1.12;letter-spacing:-.035em;text-wrap:balance;
+}
+.statement h2 span,.architecture__intro h2 span,.deployment__intro h2 span,.scenarios__heading h2 span,.closing__copy h2 span{color:var(--fg-mute)}
+
+/* Intro copy. Descendant + :not() because some sections wrap the paragraph in a
+   grid child, and .category-label is a sibling <p> in the others. */
+.architecture__intro p:not(.category-label),
+.deployment__intro p:not(.category-label),
+.scenarios__heading p:not(.category-label),
+.closing__copy p:not(.category-label){
+  max-width:62ch;color:var(--fg-dim);font-size:15px;line-height:1.7;letter-spacing:-.005em;
+}
+.handoff .category-label,.architecture .category-label,
+.deployment .category-label,.scenarios .category-label,.closing .category-label{
+  max-width:none;color:var(--fg-mute);font:500 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;
+}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.tag{display:inline-flex;align-items:center;justify-content:center;min-width:104px;padding:5px 10px;
+  border:1px solid currentColor;border-radius:2px;font:500 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.tag--ok{color:var(--ok)}
+.tag--warn{color:var(--warn)}
+.tag--bad{color:var(--bad)}
+.tag--hold{color:var(--hold)}
+
+/* Section 01 — the operational problem. */
+
+.handoff{padding:0 0 96px;background:var(--ink)}
+
+.statement{padding-top:88px}
+.statement__grid{display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:start}
+.statement__aside{padding:24px 26px;border:1px solid var(--rule);border-left:2px solid var(--data);background:var(--panel)}
+.statement__aside p{margin:0;color:var(--fg-dim);font-size:14px;line-height:1.72}
+.statement__aside strong{display:block;margin-top:18px;padding-top:18px;border-top:1px dashed var(--rule-lit);
+  color:var(--fg);font:500 13px/1.5 var(--mono);letter-spacing:.02em}
+
+/* Threat register — classification, not a row of feature cards. */
+.anomaly-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:44px 0 0;padding:0;list-style:none;
+  border:1px solid var(--rule);background:var(--panel)}
+.anomaly-strip li{position:relative;display:flex;flex-direction:column;gap:11px;
+  padding:26px 22px 24px;border-right:1px solid var(--rule);transition:background .25s ease}
+.anomaly-strip li:last-child{border-right:0}
+.anomaly-strip li:hover{background:#0e1721}
+.anomaly-strip li::after{position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:var(--data);transform:scaleX(0);transform-origin:left;transition:transform .3s ease;content:""}
+.anomaly-strip li:hover::after{transform:scaleX(1)}
+.anomaly-strip span{color:var(--fg-mute);font:500 10px/1 var(--mono);letter-spacing:.18em}
+.anomaly-strip strong{color:var(--fg);font-family:var(--display);font-size:17px;font-weight:500;letter-spacing:-.02em}
+.anomaly-strip small{color:var(--fg-dim);font-size:13px;line-height:1.6}
+
+/* Section 02 — trust architecture. */
+
+.architecture{padding:96px 0;background:var(--ink);border-top:1px solid var(--rule)}
+.architecture__intro{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:end}
+
+.spec-list{display:grid;gap:0;margin-top:30px;border-top:1px solid var(--rule)}
+.spec-list div{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;
+  padding:13px 0;border-bottom:1px solid var(--rule)}
+.spec-list dt,.spec-list span:first-child{color:var(--fg-mute);font:500 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase}
+.spec-list i{height:1px;background:repeating-linear-gradient(90deg,var(--tick) 0 3px,transparent 3px 7px)}
+.spec-list strong{color:var(--fg);font:500 12px/1 var(--mono);letter-spacing:.08em}
+
+.trust-flow{margin-top:56px;padding:0;border:1px solid var(--rule);background:var(--panel);
+  background-image:linear-gradient(var(--tick) 1px,transparent 1px),linear-gradient(90deg,var(--tick) 1px,transparent 1px);
+  background-size:52px 52px}
+.trust-flow__body{padding:36px 30px 40px}
+.trust-streams li{border:1px solid var(--rule);background:#0b131b}
+.trust-streams li strong{font-family:var(--mono);letter-spacing:.16em}
+.trust-core__value strong{font-family:var(--display);letter-spacing:-.04em}
+.trust-core__value small{font:500 9px/1 var(--mono);letter-spacing:.18em;color:var(--fg-mute)}
+.trust-outcome span{font:500 10px/1 var(--mono);letter-spacing:.2em;color:var(--fg-dim)}
+
+/* Section 03 — receiver-side deployment. */
+
+.deployment{padding:96px 0;background:var(--ink);border-top:1px solid var(--rule)}
+.deployment__intro{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:end}
+
+.earth-console{margin-top:52px;border:1px solid var(--rule);background:var(--panel)}
+.earth-console .panel-bar{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  padding:12px 18px;border-bottom:1px solid var(--rule);background:var(--recess);
+  color:var(--fg-mute);font:500 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase}
+.earth-console .panel-bar i{display:inline-block;width:5px;height:5px;margin-right:9px;border-radius:50%;
+  background:var(--ok);box-shadow:0 0 0 3px #22C55E1f}
+.earth-stage figcaption{padding:14px 18px;border-top:1px solid var(--rule);
+  color:var(--fg-mute);font:400 11px/1.5 var(--mono);letter-spacing:.08em}
+
+.deployment-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch;gap:0;
+  border-top:1px solid var(--rule)}
+.deployment-flow>div{display:flex;flex-direction:column;gap:9px;padding:24px 22px;border-right:1px solid var(--rule)}
+.deployment-flow>div:last-child{border-right:0}
+.deployment-flow__active{position:relative;background:#0d161f}
+.deployment-flow__active::before{position:absolute;top:0;left:0;right:0;height:2px;background:var(--data);content:""}
+.deployment-flow span{color:#7f8c9b;font:500 10px/1 var(--mono);letter-spacing:.16em}
+.deployment-flow strong{color:var(--fg);font:500 13px/1 var(--mono);letter-spacing:.1em}
+.deployment-flow small{color:var(--fg-dim);font-size:13px;line-height:1.55}
+.deployment-flow i{display:flex;align-items:center;justify-content:center;width:44px;
+  border-right:1px solid var(--rule);color:var(--fg-mute);font-family:var(--mono);font-size:13px;font-style:normal}
+
+/* Section 04 — validation register. */
+
+.scenarios{padding:96px 0;background:var(--ink);border-top:1px solid var(--rule)}
+.scenarios__heading{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:end}
+
+.scenario-list{margin-top:48px;border:1px solid var(--rule);background:var(--panel)}
+.scenario-head{display:grid;grid-template-columns:64px minmax(180px,1fr) minmax(200px,1.4fr) 140px;
+  align-items:center;gap:20px;padding:12px 22px;border-bottom:1px solid var(--rule);background:var(--recess);
+  color:var(--fg-mute);font:500 10px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase}
+.scenario-list article{display:grid;grid-template-columns:64px minmax(180px,1fr) minmax(200px,1.4fr) 140px;
+  align-items:center;gap:20px;padding:19px 22px;border-bottom:1px solid var(--rule);transition:background .2s ease}
+.scenario-list article:last-child{border-bottom:0}
+.scenario-list article:hover{background:#0e1721}
+.scenario-list span{color:var(--fg-mute);font:500 11px/1 var(--mono);letter-spacing:.12em}
+.scenario-list strong{color:var(--fg);font-family:var(--display);font-size:16px;font-weight:500;letter-spacing:-.02em}
+.scenario-list small{color:var(--fg-dim);font-size:13px;line-height:1.55}
+.scenario-list em{justify-self:end;font-style:normal}
+
+/* Section 05 — closing, set in a well below the page ground. */
+/* Closing: a plotting surface. Flat ground, a measured grid, tick marks down
+   the edges and corner registration brackets — the same instrument language as
+   the panels, with no imagery or gradient haze. */
+.closing{position:relative;padding:120px 0 128px;background:var(--well);
+  border-top:1px solid var(--rule-lit);min-height:0;height:auto;overflow:hidden;isolation:isolate}
+
+/* Plotting grid: a fine 16px rule inside a heavier 96px major division.
+   Brightened from the original #141f30/#1d2b42 — against --well (#01030D)
+   those read as almost pure black, so the "plotting surface" concept never
+   actually showed up on screen. */
+.closing__grid{position:absolute;inset:0;
+  background-image:
+    linear-gradient(#1c2942 1px,transparent 1px),
+    linear-gradient(90deg,#1c2942 1px,transparent 1px),
+    linear-gradient(#2c3f5c 1px,transparent 1px),
+    linear-gradient(90deg,#2c3f5c 1px,transparent 1px);
+  background-size:16px 16px,16px 16px,96px 96px,96px 96px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 85% at 50% 45%,#000,transparent 72%);
+  mask-image:radial-gradient(ellipse 70% 85% at 50% 45%,#000,transparent 72%)}
+
+/* Tick rule along the top and bottom edges. */
+.closing::before{position:absolute;left:0;right:0;top:0;height:9px;content:"";
+  background:repeating-linear-gradient(90deg,var(--rule-lit) 0 1px,transparent 1px 32px);
+  opacity:.8}
+.closing::after{position:absolute;left:0;right:0;bottom:0;top:auto;width:auto;height:9px;
+  aspect-ratio:auto;transform:none;border:0;border-radius:0;
+  background:repeating-linear-gradient(90deg,var(--rule-lit) 0 1px,transparent 1px 32px);
+  box-shadow:none;opacity:.8;content:""}
+
+/* Corner registration brackets on the content shell. */
+.closing__layout::before,.closing__layout::after{position:absolute;width:14px;height:14px;content:"";pointer-events:none}
+.closing__layout::before{top:-34px;left:-18px;border-top:1px solid var(--rule-lit);border-left:1px solid var(--rule-lit)}
+.closing__layout::after{bottom:-34px;right:-18px;border-bottom:1px solid var(--rule-lit);border-right:1px solid var(--rule-lit)}
+
+/* Centered — no boxed panel. The headline is the hero; the live system
+   data reads as a quiet, slim proof strip underneath it, not a competing
+   dashboard card. */
+.closing__layout{position:relative;z-index:1;min-height:0;display:flex;
+  flex-direction:column;align-items:center;max-width:720px;margin:0 auto;text-align:center}
+.closing__copy{max-width:none}
+.closing__copy h2{margin-top:0}
+.closing__copy>p:not(.category-label){max-width:480px;margin:22px auto 0}
+.closing__actions{display:flex;align-items:center;justify-content:center;gap:26px;margin-top:34px}
+.closing__link{display:inline-flex;align-items:center;gap:9px;color:var(--fg-dim);font:500 13px var(--text);
+  letter-spacing:-.005em;transition:color .2s ease,gap .2s ease}
+.closing__link span{transition:transform .2s ease}
+.closing__link:hover{color:var(--fg);gap:12px}
+
+.closing__strip{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
+  list-style:none;margin:52px 0 0;padding:24px 0 0;border-top:1px solid var(--rule);
+  color:var(--fg-mute);font:500 11px/1 var(--mono);letter-spacing:.1em}
+.closing__strip li{display:flex;align-items:baseline;gap:7px;padding:6px 20px;border-right:1px solid var(--rule)}
+.closing__strip li:last-child{border-right:0}
+.closing__strip span{text-transform:uppercase;letter-spacing:.16em;font-size:10px}
+.closing__strip b{color:var(--fg);font-weight:500}
+.closing__strip b.ok{color:var(--ok)}
+.closing__strip strong{font-family:var(--display);font-size:20px;font-weight:500;letter-spacing:-.02em;color:var(--fg)}
+.closing__strip-live{color:var(--ok);text-transform:uppercase}
+.closing__strip-live i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ok);
+  box-shadow:0 0 0 3px #22C55E1f;animation:pulse 2.4s ease-in-out infinite}
+
+/* Footer — technical sign-off under the well. */
+/* Orbit-story overlays — type only, so the sequence keeps its own layout. */
+.story-eyebrow{font-family:var(--mono);letter-spacing:.2em}
+.story-result__score span{font-family:var(--mono);letter-spacing:.1em}
+.scroll-cue{font-family:var(--mono)}
+
+
+@media(max-width:1080px){
+  .statement__grid,.architecture__intro,.deployment__intro,.scenarios__heading{grid-template-columns:1fr;gap:34px;align-items:start}
+  .closing::after{opacity:.5}
+  .anomaly-strip{grid-template-columns:1fr 1fr}
+  .anomaly-strip li:nth-child(2){border-right:0}
+  .anomaly-strip li:nth-child(-n+2){border-bottom:1px solid var(--rule)}
+  .scenario-head,.scenario-list article{grid-template-columns:52px minmax(140px,1fr) 128px}
+  .scenario-head span:nth-child(3),.scenario-list small{display:none}
+}
+
+@media(max-width:760px){
+  .shell{width:calc(100% - 36px)}
+  .handoff{padding-bottom:64px}
+  .statement{padding-top:60px}
+  .architecture,.deployment,.scenarios,.closing{padding:64px 0}
+  .anomaly-strip{grid-template-columns:1fr}
+  .anomaly-strip li{border-right:0;border-bottom:1px solid var(--rule)}
+  .anomaly-strip li:last-child{border-bottom:0}
+  .deployment-flow{grid-template-columns:1fr}
+  .deployment-flow>div{border-right:0;border-bottom:1px solid var(--rule)}
+  .deployment-flow i{display:none}
+  .trust-flow__body{padding:24px 16px 28px}
+  .scenario-head{display:none}
+  /* Stacked row: ID and verdict share the top line so the mission name gets
+     the full width. The verdict stays visible — earlier sheets hide it here. */
+  .scenario-list article{grid-template-columns:1fr auto;gap:7px 12px;padding:16px}
+  .scenario-list article>span{grid-column:1;grid-row:1;white-space:nowrap;font-size:10px}
+  .scenario-list article>em{display:inline-flex;grid-column:2;grid-row:1;justify-self:end;margin:0;min-width:0}
+  .scenario-list article>strong{grid-column:1/-1;grid-row:2;font-size:17px}
+  .scenario-list article>small{display:block;grid-column:1/-1;grid-row:3}
+  .closing__strip{justify-content:flex-start}
+  .closing__strip li{flex:1 1 44%;justify-content:center;border-right:0;padding:8px 4px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .closing__strip-live i{animation:none}
+  .anomaly-strip li::after{transition:none}
+}
+
+/* Child-selector overrides. Verdicts bind to .tag classes rather than the
+   inherited :nth-child colouring, which keyed severity to row position. */
+
+.scenario-list article{min-height:0}
+.scenario-list article::before{display:none}
+.scenario-list article:hover{background:#0e1721}
+.scenario-list article>span{color:var(--fg-mute);font:500 11px/1 var(--mono);letter-spacing:.12em}
+.scenario-list article>strong{color:var(--fg);font:500 16px/1.2 var(--display);letter-spacing:-.02em}
+.scenario-list article>small{color:var(--fg-dim);font-size:13px;line-height:1.55}
+.scenario-list article>em{justify-self:end;font:500 9px/1 var(--mono);letter-spacing:.14em;font-style:normal}
+.scenario-list article>em.tag--ok{color:var(--ok)}
+.scenario-list article>em.tag--warn{color:var(--warn)}
+.scenario-list article>em.tag--bad{color:var(--bad)}
+.scenario-list article>em.tag--hold{color:var(--hold)}
+
+.anomaly-strip li{min-height:0;overflow:visible}
+.anomaly-strip li>span{color:var(--fg-mute);font:500 10px/1 var(--mono);letter-spacing:.18em}
+.anomaly-strip li>strong{margin-top:0;color:var(--fg);font:500 17px/1.25 var(--display);letter-spacing:-.02em}
+.anomaly-strip li>small{margin-top:0;color:var(--fg-dim);font-size:13px;line-height:1.6}
+
+.architecture__intro,.deployment__intro,.scenarios__heading{align-items:start}

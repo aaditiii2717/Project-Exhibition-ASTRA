@@ -3,7 +3,9 @@
 
   const FRAME_COUNT = 660;
   const FRAME_EASE = 0.16;
-  const CACHE_LIMIT = 8;
+  const CACHE_LIMIT = 160;
+  const PREBUFFER = 48;
+  const PREBUFFER_TIMEOUT = 6000;
 
   const story = document.getElementById("orbitStory");
   const canvas = document.getElementById("orbitCanvas");
@@ -111,6 +113,38 @@
     });
   }
 
+
+  /* Loader progress. The sequence only feels smooth if a run of frames is
+     decoded before the first scroll, so the boot screen reports real buffering
+     rather than dismissing on frame 0. */
+  let buffered = 0;
+  let bootDone = false;
+
+  function finishBoot() {
+    if (bootDone) return;
+    bootDone = true;
+    ready = true;
+    bootValue.textContent = "100";
+    bootLine.style.transform = "scaleX(1)";
+    updateStory();
+    drawFrame(0);
+    window.setTimeout(() => boot.classList.add("is-ready"), 260);
+  }
+
+  function noteBuffered() {
+    buffered += 1;
+    const pct = Math.min(99, Math.round((buffered / PREBUFFER) * 100));
+    bootValue.textContent = String(pct).padStart(2, "0");
+    bootLine.style.transform = `scaleX(${(pct / 100).toFixed(3)})`;
+    if (buffered === 1) drawFrame(0);
+    if (buffered >= PREBUFFER) finishBoot();
+  }
+
+  function prebuffer() {
+    for (let i = 0; i < PREBUFFER; i += 1) requestFrame(i, i < 8);
+    window.setTimeout(finishBoot, PREBUFFER_TIMEOUT);
+  }
+
   function requestFrame(rawIndex, highPriority = false) {
     const index = Math.round(clamp(rawIndex, 0, FRAME_COUNT - 1));
     if (cache.has(index)) return Promise.resolve(touch(index, cache.get(index)));
@@ -130,14 +164,7 @@
       touch(index, image);
       trimCache();
       lastDrawn = -1;
-      if (!ready) {
-        ready = true;
-        bootValue.textContent = "100";
-        bootLine.style.transform = "scaleX(1)";
-        updateStory();
-        drawFrame(0);
-        requestAnimationFrame(() => boot.classList.add("is-ready"));
-      }
+      if (!ready) noteBuffered();
       resolveTask(image);
     };
     image.onerror = () => {
@@ -279,8 +306,9 @@
   }
 
   function startSequence() {
-    bootValue.textContent = "12";
-    bootLine.style.transform = "scaleX(.12)";
+    bootValue.textContent = "00";
+    bootLine.style.transform = "scaleX(0)";
+    prebuffer();
     const initialFrame = Math.round(currentFrame);
     requestFrame(initialFrame, true).then(() => {
       if (initialFrame === 0) [1, 2, 3, 4].forEach((index) => requestFrame(index));
@@ -384,13 +412,6 @@
       }
     }
 
-    const utc = document.getElementById("landingUtc");
-    const updateUtc = () => {
-      if (!utc) return;
-      utc.textContent = `UTC / ${new Date().toISOString().slice(11, 19)}`;
-    };
-    updateUtc();
-    window.setInterval(updateUtc, 1000);
   }
 
   resizeCanvas();
