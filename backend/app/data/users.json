@@ -1,0 +1,14 @@
+{
+  "employee1": {
+    "password_hash": "b8c17d9a6a52f0471ea985d6896be2e2$4be853bca3f989577b7a59a5560e9ca434a4c739a2af05a867fe428de1b0811f",
+    "role": "employee"
+  },
+  "manager1": {
+    "password_hash": "ed68400483e57dad49f2051e829f5901$778168970e7bc5e737ae0ae5d81d5ac848839de417cd87246f0da9f616058dbe",
+    "role": "manager"
+  },
+  "supervisor1": {
+    "password_hash": "58e21b35a0e2ad02b1e65b43e7f345b7$d6b14595a51e78ac1b08d163ab45184a328633e46153dba7ce9c17b15d132e15",
+    "role": "supervisor"
+  }
+}

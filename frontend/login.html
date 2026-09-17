@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#03070a" />
+<title>ASTRA — Mission Control sign in</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--black);
+    color: var(--frost);
+    font-family: var(--text);
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Starfield */
+  .stars, .stars::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      radial-gradient(1.4px 1.4px at 20% 30%, #fff, transparent),
+      radial-gradient(1.4px 1.4px at 72% 12%, #fff, transparent),
+      radial-gradient(1px 1px at 48% 62%, #cfe0ee, transparent),
+      radial-gradient(1.6px 1.6px at 88% 76%, #fff, transparent),
+      radial-gradient(1px 1px at 8% 82%, #cfe0ee, transparent),
+      radial-gradient(1.2px 1.2px at 60% 88%, #fff, transparent),
+      radial-gradient(1px 1px at 35% 8%, #fff, transparent),
+      radial-gradient(1.3px 1.3px at 92% 40%, #cfe0ee, transparent),
+      radial-gradient(1px 1px at 15% 55%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 78% 58%, #fff, transparent);
+    background-repeat: repeat;
+    background-size: 340px 340px;
+    opacity: .55;
+  }
+  .glow {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(640px circle at 50% -6%, rgba(87,149,245,.2), transparent 60%),
+      radial-gradient(480px circle at 100% 100%, rgba(87,149,245,.1), transparent 55%);
+    pointer-events: none;
+  }
+
+  main.card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .badge {
+    display: grid;
+    place-items: center;
+    margin-bottom: 30px;
+  }
+  .badge img { width: 220px; max-width: 70vw; height: auto; object-fit: contain; filter: drop-shadow(0 0 22px rgba(87,149,245,.35)); }
+
+  h1 {
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .18em;
+    text-align: center;
+    margin: 0 0 4px;
+    color: var(--frost);
+  }
+  p.sub {
+    text-align: center;
+    color: var(--platinum);
+    font: 12px/1 var(--mono);
+    letter-spacing: .1em;
+    margin: 0 0 30px;
+  }
+
+  form { width: 100%; }
+  .field-wrap { position: relative; margin-bottom: 14px; }
+  .field-wrap svg {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 17px;
+    height: 17px;
+    color: #6b7680;
+    pointer-events: none;
+  }
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    height: 52px;
+    padding: 0 18px 0 48px;
+    border-radius: 999px;
+    border: none;
+    background: #eef2f5;
+    color: #0d1620;
+    font: 15px/1 var(--text);
+    outline: none;
+    box-shadow: 0 1px 0 rgba(255,255,255,.5) inset;
+    transition: box-shadow .15s var(--ease), transform .1s var(--ease);
+  }
+  input::placeholder { color: #7b8791; }
+  input[type="text"]:focus, input[type="password"]:focus {
+    box-shadow: 0 0 0 3px rgba(87,149,245,.45);
+  }
+
+  .submit {
+    width: 100%;
+    height: 52px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #6ba2f7, #2f5fc9);
+    color: #fff;
+    font: 15px/1 var(--text);
+    font-weight: 700;
+    letter-spacing: .02em;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(47,95,201,.4);
+    transition: filter .15s var(--ease), transform .1s var(--ease);
+  }
+  .submit:disabled { opacity: .65; cursor: progress; }
+  .submit:not(:disabled):hover { filter: brightness(1.08); }
+  .submit:not(:disabled):active { transform: translateY(1px); }
+
+  .error {
+    display: none;
+    margin-top: 16px;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(229,106,114,.4);
+    background: rgba(229,106,114,.12);
+    color: #f0989e;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+  }
+  .error.is-visible { display: block; }
+
+  .links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    margin-top: 26px;
+    font-size: 13px;
+  }
+  .links a { color: var(--silver); text-decoration: none; }
+  .links a:hover { color: #fff; }
+  .links i { width: 1px; height: 12px; background: var(--line-strong); display: inline-block; }
+
+  @media (max-width: 420px) {
+    .badge img { width: 170px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+  <div class="glow" aria-hidden="true"></div>
+
+  <main class="card">
+    <div class="badge"><img src="assets/brand/astra-logo-navigation.png" alt="ASTRA" /></div>
+    <h1>ASTRA MISSION CONTROL</h1>
+    <p class="sub">Navigation Trust &amp; Integrity Layer</p>
+
+    <form id="loginForm" autocomplete="on">
+      <div class="field-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" stroke-linecap="round"/><circle cx="12" cy="7" r="4"/></svg>
+        <input type="text" id="username" name="username" autocomplete="username" placeholder="Username" required />
+      </div>
+      <div class="field-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>
+        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Password" required />
+      </div>
+      <button type="submit" class="submit" id="submitBtn">Log in</button>
+      <div class="error" id="loginError"></div>
+    </form>
+
+    <div class="links">
+      <a href="index.html">← Back to overview</a>
+    </div>
+  </main>
+
+<script>
+(() => {
+  "use strict";
+  const STORAGE_KEY = "astraAuth";
+
+  // Already signed in with a valid session — skip straight to Mission Control.
+  try {
+    const existing = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "null");
+    if (existing?.token && existing?.expires_at * 1000 > Date.now()) {
+      window.location.replace("main.html");
+    }
+  } catch (_) {}
+
+  const form = document.getElementById("loginForm");
+  const errorBox = document.getElementById("loginError");
+  const submitBtn = document.getElementById("submitBtn");
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    errorBox.classList.remove("is-visible");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Signing in…";
+
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.detail || "Invalid username or password.");
+      }
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      window.location.replace("main.html");
+    } catch (error) {
+      errorBox.textContent = error.message || "Sign in failed. Please try again.";
+      errorBox.classList.add("is-visible");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Log in";
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -23,6 +23,7 @@ from .forensics.memory import ForensicMemory
 from .simulation.scenarios import ScenarioGenerator
 from .evaluation.benchmark import BenchmarkEvaluator
 from .security import require_api_key, require_stream_id, settings
+from .auth import authenticate, create_token, get_current_user, require_level, AuthUser, ROLE_LEVELS
 from threading import RLock
 
 app = FastAPI(
@@ -86,6 +87,33 @@ class SingleStepAnalysisResponse(BaseModel):
     forensic_event: ForensicEvent
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+@app.post("/api/auth/login")
+def login(payload: LoginRequest):
+    """Issues a role-scoped session token for the three-tier access hierarchy
+    (employee < manager < supervisor)."""
+    role = authenticate(payload.username, payload.password)
+    if not role:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    token, expires_at = create_token(payload.username, role)
+    return {
+        "token": token,
+        "username": payload.username,
+        "role": role,
+        "level": ROLE_LEVELS[role],
+        "expires_at": expires_at,
+    }
+
+
+@app.get("/api/auth/me")
+def whoami(user: AuthUser = Depends(get_current_user)):
+    return {"username": user.username, "role": user.role, "level": user.level}
+
+
 @app.get("/api")
 def read_api_root():
     return {
@@ -107,7 +135,7 @@ def health_check():
     }
 
 
-@app.post("/api/validate", dependencies=[Depends(require_api_key)])
+@app.post("/api/validate", dependencies=[Depends(require_api_key), Depends(require_level(2))])
 def validate_single(payload: Dict[str, Any], stream_id: str = Depends(require_stream_id)):
     """Validates raw dictionary via secure input gateway."""
     pipeline = get_stream_pipeline(stream_id)
@@ -126,7 +154,7 @@ def validate_single(payload: Dict[str, Any], stream_id: str = Depends(require_st
     }
 
 
-@app.post("/api/analyze", dependencies=[Depends(require_api_key)])
+@app.post("/api/analyze", dependencies=[Depends(require_api_key), Depends(require_level(2))])
 def analyze_single(payload: Dict[str, Any] = Body(...), stream_id: str = Depends(require_stream_id)):
     """
     Executes full multi-layer ASTRA pipeline on a normalized GNSS observation:
@@ -182,13 +210,13 @@ def analyze_single(payload: Dict[str, Any] = Body(...), stream_id: str = Depends
     }
 
 
-@app.get("/api/scenarios")
+@app.get("/api/scenarios", dependencies=[Depends(require_level(1))])
 def list_scenarios():
     """Returns available simulation scenarios with metadata."""
     return ScenarioGenerator.get_all_scenarios_meta()
 
 
-@app.post("/api/simulate/{scenario_id}")
+@app.post("/api/simulate/{scenario_id}", dependencies=[Depends(require_level(1))])
 def simulate_scenario(scenario_id: str, steps: int = 25):
     """
     Executes a deterministic simulated threat scenario.
@@ -253,7 +281,7 @@ def simulate_scenario(scenario_id: str, steps: int = 25):
 MAX_INGEST_CONTENT_BYTES = 2 * 1024 * 1024  # 2 MB
 
 
-@app.post("/api/ingest/text", dependencies=[Depends(require_api_key)])
+@app.post("/api/ingest/text", dependencies=[Depends(require_api_key), Depends(require_level(2))])
 def ingest_text_dataset(payload: Dict[str, str] = Body(...)):
     """
     Ingests raw CSV or NMEA text content, calculates SHA-256 hash, parses, validates, and runs pipeline.
@@ -347,7 +375,7 @@ def ingest_text_dataset(payload: Dict[str, str] = Body(...)):
     }
 
 
-@app.get("/api/forensics")
+@app.get("/api/forensics", dependencies=[Depends(require_level(1))])
 def get_forensic_ledger():
     """Returns current in-memory cryptographic event chain and verification status."""
     is_valid, msg, bad_id, bad_seq = forensic_memory.verify_chain()
@@ -361,7 +389,7 @@ def get_forensic_ledger():
     }
 
 
-@app.post("/api/forensics/tamper-test", dependencies=[Depends(require_api_key)])
+@app.post("/api/forensics/tamper-test", dependencies=[Depends(require_api_key), Depends(require_level(3))])
 def tamper_test():
     """
     Deliberately corrupts an event in memory to demonstrate cryptographic tamper detection.
@@ -372,7 +400,7 @@ def tamper_test():
     return res
 
 
-@app.post("/api/forensics/reset", dependencies=[Depends(require_api_key)])
+@app.post("/api/forensics/reset", dependencies=[Depends(require_api_key), Depends(require_level(3))])
 def reset_forensics():
     if settings.is_production:
         raise HTTPException(status_code=404, detail="Not found")
@@ -380,7 +408,7 @@ def reset_forensics():
     return {"status": "RESET"}
 
 
-@app.get("/api/evaluation")
+@app.get("/api/evaluation", dependencies=[Depends(require_level(1))])
 def get_evaluation_benchmark():
     """Runs scientific evaluation and returns comparative metrics across models."""
     return BenchmarkEvaluator.run_full_benchmark()
@@ -392,6 +420,7 @@ FRONTEND_ROOT = Path(__file__).resolve().parents[2] / "frontend"
 FRONTEND_FILES = frozenset({
     "index.html",
     "main.html",
+    "login.html",
     "terms.html",
     "styles.css",
     "landing-redesign.css",
@@ -399,6 +428,8 @@ FRONTEND_FILES = frozenset({
     "script.js",
     "support.js",
     "help-menu.js",
+    "header.js",
+    "auth-guard.js",
     "threeui.bundle.js",
     "favicon.svg",
 })
@@ -424,6 +455,12 @@ def serve_landing_page():
 @app.get("/main.html", include_in_schema=False)
 def serve_mission_control():
     return FileResponse(FRONTEND_ROOT / "main.html")
+
+
+@app.get("/login", include_in_schema=False)
+@app.get("/login.html", include_in_schema=False)
+def serve_login_page():
+    return FileResponse(FRONTEND_ROOT / "login.html")
 
 
 @app.get("/{filename}", include_in_schema=False)
