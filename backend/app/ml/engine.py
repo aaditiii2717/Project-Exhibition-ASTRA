@@ -7,9 +7,15 @@ ML does NOT override physical laws; it serves as one more vote in evidence fusio
 
 import numpy as np
 import os
-import joblib
 from typing import Dict, List, Optional, Tuple
-from sklearn.ensemble import IsolationForest, RandomForestClassifier
+
+try:
+    import joblib
+    from sklearn.ensemble import IsolationForest, RandomForestClassifier
+    HAS_SKLEARN = True
+except ImportError:
+    HAS_SKLEARN = False
+
 from ..core.schema import GNSSObservation, EvidenceItem, CheckStatus
 
 
@@ -51,6 +57,8 @@ class MLEngine:
 
     def _load_approved_model(self) -> bool:
         """Load only a versioned artifact produced by the approved training workflow."""
+        if not HAS_SKLEARN:
+            return False
         model_path = os.getenv("ASTRA_MODEL_PATH")
         if not model_path:
             return False

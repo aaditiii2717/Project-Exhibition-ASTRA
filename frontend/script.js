@@ -385,9 +385,12 @@
     }
 
     const utc = document.getElementById("landingUtc");
+    const topbarUtc = document.getElementById("topbarUtc");
+    const topbarUtcValue = topbarUtc ? topbarUtc.querySelector("b") : null;
     const updateUtc = () => {
-      if (!utc) return;
-      utc.textContent = `UTC / ${new Date().toISOString().slice(11, 19)}`;
+      const time = new Date().toISOString().slice(11, 19);
+      if (utc) utc.textContent = `UTC / ${time}`;
+      if (topbarUtcValue) topbarUtcValue.textContent = time;
     };
     updateUtc();
     window.setInterval(updateUtc, 1000);

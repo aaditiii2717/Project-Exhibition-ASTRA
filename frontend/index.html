@@ -7,10 +7,11 @@
     <meta name="description" content="ASTRA evaluates GNSS observations through engineering checks, physical consistency, anomaly detection and explainable trust decisions." />
     <title>ASTRA — Trust, from orbit to action</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="assets/fonts/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="styles.css?v=18" />
-    <link rel="stylesheet" href="landing-redesign.css?v=6" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=21" />
+    <link rel="stylesheet" href="landing-redesign.css?v=14" />
   </head>
   <body>
     <div class="boot" id="boot" aria-live="polite">
@@ -29,7 +30,10 @@
         <a href="#proof">Architecture</a>
         <a href="#deployment">Deployment</a>
       </nav>
-      <a class="access-link" href="main.html">Open mission control <span>↗</span></a>
+      <div class="topbar__actions">
+        <span class="topbar__clock" id="topbarUtc" aria-hidden="true"><i></i>UTC <b>00:00:00</b></span>
+        <a class="access-link" href="main.html">Open mission control <span>↗</span></a>
+      </div>
     </header>
 
     <main id="top">
@@ -42,7 +46,6 @@
             <p class="story-eyebrow">Navigation trust layer</p>
             <h1>Trust begins<br />above.</h1>
             <p>Validate the signal. Test the physics.<br />Trust the decision.</p>
-            <a class="hero-action" href="#trust">Discover ASTRA <span>↓</span></a>
           </article>
 
           <article class="story-copy story-copy--right" data-start="0.14" data-end="0.30">
@@ -226,7 +229,6 @@
       </section>
 
       <section class="closing" id="contact" aria-labelledby="closing-title">
-        <div class="closing__grid" aria-hidden="true"></div>
         <div class="shell closing__layout">
           <div class="closing__copy reveal">
             <p class="category-label">MISSION CONTROL / READY</p>
@@ -234,6 +236,12 @@
             <p>Move from simulated telemetry to explainable navigation decisions in the ASTRA operational console.</p>
             <a class="closing__action" href="main.html">Open mission control <span>↗</span></a>
           </div>
+          <dl class="closing__status reveal" aria-label="System status">
+            <div><dt>System status</dt><dd><i></i>Operational</dd></div>
+            <div><dt>Evidence layers</dt><dd>4 active</dd></div>
+            <div><dt>Audit chain</dt><dd>SHA-256 verified</dd></div>
+            <div><dt>Decision latency</dt><dd>&lt; 40 ms</dd></div>
+          </dl>
         </div>
       </section>
     </main>
@@ -246,6 +254,6 @@
       <p class="footer__rights">© 2026 ASTRA. All rights reserved.</p>
     </footer>
     <noscript>This experience requires JavaScript to play the orbital sequence.</noscript>
-    <script defer src="script.js?v=23"></script>
+    <script defer src="script.js?v=24"></script>
   </body>
 </html>

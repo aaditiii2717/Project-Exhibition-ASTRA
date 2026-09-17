@@ -398,6 +398,7 @@ FRONTEND_FILES = frozenset({
     "tokens.css",
     "script.js",
     "support.js",
+    "help-menu.js",
     "threeui.bundle.js",
     "favicon.svg",
 })
