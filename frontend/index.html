@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=21" />
-    <link rel="stylesheet" href="landing-redesign.css?v=14" />
+    <link rel="stylesheet" href="landing-redesign.css?v=18" />
   </head>
   <body>
     <div class="boot" id="boot" aria-live="polite">
@@ -21,7 +21,7 @@
     </div>
 
     <header class="topbar" id="topbar">
-      <a class="wordmark" href="#top" aria-label="ASTRA home">
+      <a class="wordmark" href="#" aria-label="ASTRA home">
         <img src="assets/brand/astra-logo-navigation.png" alt="ASTRA" width="92" height="22" />
         <span>TRUST LAYER</span>
       </a>
@@ -246,12 +246,22 @@
       </section>
     </main>
 
-    <footer class="footer" aria-label="Legal and contact information">
-      <nav class="footer__links" aria-label="Footer navigation">
-        <a href="terms.html">Terms &amp; Conditions</a>
-        <a href="#contact">Contact Us</a>
-      </nav>
-      <p class="footer__rights">© 2026 ASTRA. All rights reserved.</p>
+    <footer class="footer" aria-label="Site footer">
+      <div class="shell footer__row">
+        <a class="footer__wordmark" href="#" aria-label="ASTRA home">
+          <img src="assets/brand/astra-logo-navigation.png" alt="ASTRA" />
+        </a>
+
+        <nav class="footer__links" aria-label="Footer navigation">
+          <a href="#trust">System</a>
+          <a href="#deployment">Deployment</a>
+          <a href="login.html">Mission control</a>
+          <a href="terms.html">Terms &amp; Conditions</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+
+        <p class="footer__rights">© 2026 ASTRA. All rights reserved.</p>
+      </div>
     </footer>
     <noscript>This experience requires JavaScript to play the orbital sequence.</noscript>
     <script defer src="script.js?v=24"></script>

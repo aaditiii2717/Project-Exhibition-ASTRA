@@ -422,6 +422,7 @@ FRONTEND_FILES = frozenset({
     "main.html",
     "login.html",
     "terms.html",
+    "contact.html",
     "styles.css",
     "landing-redesign.css",
     "tokens.css",

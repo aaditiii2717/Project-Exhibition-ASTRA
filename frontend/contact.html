@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#03070a" />
-<title>ASTRA — Mission Control sign in</title>
+<title>ASTRA — Contact Us</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,7 +60,7 @@
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 380px;
+    max-width: 420px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -102,21 +102,33 @@
     color: #6b7680;
     pointer-events: none;
   }
-  input[type="text"], input[type="password"] {
+  .field-wrap.textarea-wrap svg {
+    top: 24px;
+  }
+  input[type="text"], input[type="email"], textarea {
     width: 100%;
-    height: 52px;
     padding: 0 18px 0 48px;
-    border-radius: 999px;
+    border-radius: 20px;
     border: none;
     background: #eef2f5;
     color: #0d1620;
-    font: 15px/1 var(--text);
+    font: 15px/1.5 var(--text);
     outline: none;
     box-shadow: 0 1px 0 rgba(255,255,255,.5) inset;
     transition: box-shadow .15s var(--ease), transform .1s var(--ease);
   }
-  input::placeholder { color: #7b8791; }
-  input[type="text"]:focus, input[type="password"]:focus {
+  input[type="text"], input[type="email"] {
+    height: 52px;
+    border-radius: 999px;
+  }
+  textarea {
+    height: 120px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    resize: vertical;
+  }
+  input::placeholder, textarea::placeholder { color: #7b8791; }
+  input[type="text"]:focus, input[type="email"]:focus, textarea:focus {
     box-shadow: 0 0 0 3px rgba(87,149,245,.45);
   }
 
@@ -139,20 +151,20 @@
   .submit:not(:disabled):hover { filter: brightness(1.08); }
   .submit:not(:disabled):active { transform: translateY(1px); }
 
-  .error {
+  .success {
     display: none;
     margin-top: 16px;
     width: 100%;
     padding: 10px 14px;
     border-radius: 10px;
-    border: 1px solid rgba(229,106,114,.4);
-    background: rgba(229,106,114,.12);
-    color: #f0989e;
+    border: 1px solid rgba(87,149,245,.4);
+    background: rgba(87,149,245,.12);
+    color: #96c0fb;
     font-size: 13px;
     line-height: 1.5;
     text-align: center;
   }
-  .error.is-visible { display: block; }
+  .success.is-visible { display: block; }
 
   .links {
     display: flex;
@@ -164,7 +176,6 @@
   }
   .links a { color: var(--silver); text-decoration: none; }
   .links a:hover { color: #fff; }
-  .links i { width: 1px; height: 12px; background: var(--line-strong); display: inline-block; }
 
   @media (max-width: 420px) {
     .badge img { width: 170px; }
@@ -177,20 +188,24 @@
 
   <main class="card">
     <div class="badge"><img src="assets/brand/astra-logo-navigation.png" alt="ASTRA" /></div>
-    <h1>ASTRA MISSION CONTROL</h1>
-    <p class="sub">Navigation Trust &amp; Integrity Layer</p>
+    <h1>ASTRA INQUIRY</h1>
+    <p class="sub">Contact our team</p>
 
-    <form id="loginForm" autocomplete="on">
+    <form id="contactForm" autocomplete="off">
       <div class="field-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" stroke-linecap="round"/><circle cx="12" cy="7" r="4"/></svg>
-        <input type="text" id="username" name="username" autocomplete="username" placeholder="Username" required />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input type="text" id="name" name="name" placeholder="Name" required />
       </div>
       <div class="field-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>
-        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Password" required />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <input type="email" id="email" name="email" placeholder="Email address" required />
       </div>
-      <button type="submit" class="submit" id="submitBtn">Log in</button>
-      <div class="error" id="loginError"></div>
+      <div class="field-wrap textarea-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <textarea id="query" name="query" placeholder="How can we help you?" required></textarea>
+      </div>
+      <button type="submit" class="submit" id="submitBtn">Send message</button>
+      <div class="success" id="contactSuccess">Message received. We'll be in touch shortly.</div>
     </form>
 
     <div class="links">
@@ -201,60 +216,23 @@
 <script>
 (() => {
   "use strict";
-  const STORAGE_KEY = "astraAuth";
-
-  // Already signed in with a valid session — skip straight to Mission Control.
-  try {
-    const existing = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "null");
-    if (existing?.token && existing?.expires_at * 1000 > Date.now()) {
-      window.location.replace("main.html");
-      return;
-    }
-  } catch (_) {}
-
-  const form = document.getElementById("loginForm");
-  const errorBox = document.getElementById("loginError");
+  const form = document.getElementById("contactForm");
+  const successBox = document.getElementById("contactSuccess");
   const submitBtn = document.getElementById("submitBtn");
-  const usernameInput = document.getElementById("username");
-  const passwordInput = document.getElementById("password");
-
-  // Auto-fill and auto-submit to bypass login for now
-  usernameInput.value = "supervisor1";
-  passwordInput.value = "Supervisor@123";
-
-  setTimeout(() => {
-    submitBtn.click();
-  }, 100);
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    errorBox.classList.remove("is-visible");
+    successBox.classList.remove("is-visible");
     submitBtn.disabled = true;
-    submitBtn.textContent = "Authenticating...";
+    submitBtn.textContent = "Sending...";
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: usernameInput.value,
-          password: passwordInput.value,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Invalid credentials");
-      }
-
-      const data = await response.json();
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      window.location.replace("main.html");
-    } catch (err) {
+    // Simulate network request
+    setTimeout(() => {
+      form.reset();
       submitBtn.disabled = false;
-      submitBtn.textContent = "Log in";
-      errorBox.textContent = "Access denied. Invalid credentials.";
-      errorBox.classList.add("is-visible");
-    }
+      submitBtn.textContent = "Send message";
+      successBox.classList.add("is-visible");
+    }, 1200);
   });
 })();
 </script>
