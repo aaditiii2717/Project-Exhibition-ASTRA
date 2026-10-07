@@ -111,6 +111,18 @@
   .mode-toggle__btn.is-active { background: var(--frost); color: #04070a; }
 
   form { width: 100%; }
+
+  .role-picker { border: none; margin: 4px 0 6px; padding: 0; }
+  .role-picker[hidden] { display: none; }
+  .role-picker legend {
+    padding: 0 0 10px 4px;
+    color: var(--silver);
+    font: 12px/1 var(--mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .role-picker .mode-toggle { margin-bottom: 8px; }
+
   .field-wrap { position: relative; margin-bottom: 14px; }
   .field-wrap svg {
     position: absolute;
@@ -210,12 +222,20 @@
     <form id="loginForm" autocomplete="on">
       <div class="field-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" stroke-linecap="round"/><circle cx="12" cy="7" r="4"/></svg>
-        <input type="text" id="username" name="username" autocomplete="username" placeholder="Username (optional)" />
+        <input type="text" id="username" name="username" autocomplete="username" placeholder="Username" />
       </div>
       <div class="field-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>
-        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Password (optional)" />
+        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Password" />
       </div>
+      <fieldset class="role-picker" id="rolePicker" hidden>
+        <legend>Access level</legend>
+        <div class="mode-toggle" role="radiogroup" aria-label="Access level">
+          <button type="button" class="mode-toggle__btn" role="radio" data-role="employee">Employee</button>
+          <button type="button" class="mode-toggle__btn" role="radio" data-role="manager">Manager</button>
+          <button type="button" class="mode-toggle__btn" role="radio" data-role="supervisor">Supervisor</button>
+        </div>
+      </fieldset>
       <button type="submit" class="submit" id="submitBtn">Log in</button>
       <div class="error" id="loginError"></div>
     </form>
@@ -237,10 +257,22 @@
   const tabSignIn = document.getElementById("tabSignIn");
   const tabRegister = document.getElementById("tabRegister");
 
-  // Sign in / Register are the same demo-mode endpoint underneath — any
-  // username works either way — this toggle only changes the copy so the
-  // landing page's two entry points feel distinct.
+  // Register creates the account at the chosen access level (saved in
+  // Supabase on the backend); Sign in checks an existing account's password.
   let isRegisterMode = false;
+  const rolePicker = document.getElementById("rolePicker");
+  const roleButtons = rolePicker.querySelectorAll("[data-role]");
+  let selectedRole = "employee";
+  function setRole(role) {
+    selectedRole = role;
+    roleButtons.forEach((btn) => {
+      const active = btn.dataset.role === role;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-checked", String(active));
+    });
+  }
+  roleButtons.forEach((btn) => btn.addEventListener("click", () => setRole(btn.dataset.role)));
+  setRole("employee");
   function setMode(mode) {
     isRegisterMode = mode === "register";
     tabSignIn.classList.toggle("is-active", !isRegisterMode);
@@ -249,6 +281,8 @@
     tabRegister.setAttribute("aria-selected", String(isRegisterMode));
     subtitle.textContent = isRegisterMode ? "Create your operator access" : "Navigation Trust & Integrity Layer";
     submitBtn.textContent = isRegisterMode ? "Register" : "Log in";
+    rolePicker.hidden = !isRegisterMode;
+    document.getElementById("password").autocomplete = isRegisterMode ? "new-password" : "current-password";
     const url = new URL(window.location.href);
     if (isRegisterMode) url.searchParams.set("mode", "register"); else url.searchParams.delete("mode");
     window.history.replaceState(null, "", url);
@@ -268,10 +302,10 @@
     const password = document.getElementById("password").value;
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch(isRegisterMode ? "/api/auth/register" : "/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify(isRegisterMode ? { username, password, role: selectedRole } : { username, password })
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {

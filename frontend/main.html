@@ -116,7 +116,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
           <button onClick="{{ onSetForensicMode }}" class="{{ forensicModeClass }}">Investigator</button>
         </div>
         <button onClick="{{ onOpenHelp }}" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:6px;border:1px solid var(--hairline);background:transparent;color:var(--fg-muted);font-size:11px;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px solid var(--border-strong);font-size:9px;line-height:1">?</span>Help</button>
-        <button onClick="{{ onOpenImport }}" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:6px;border:none;background:var(--accent);color:var(--ground);font-size:11px;font-weight:600;cursor:pointer">Import telemetry</button>
+        <sc-if value="{{ canImportTelemetry }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ onOpenImport }}" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:6px;border:none;background:var(--accent);color:var(--ground);font-size:11px;font-weight:600;cursor:pointer">Import telemetry</button>
+        </sc-if>
+        <span class="label-micro" title="Signed in as {{ userUsername }}" style="padding:6px 10px;border:1px solid var(--hairline);border-radius:999px;white-space:nowrap">LVL {{ userLevel }} · {{ userRoleLabel }}</span>
         <button onclick="window.astraLogout && window.astraLogout()" style="height:28px;padding:0 12px;border-radius:6px;border:1px solid var(--hairline);background:transparent;color:var(--fg-muted);font-size:11px;cursor:pointer">Sign out</button>
       </div>
     </header>
@@ -733,14 +736,18 @@ class Component extends DCLogic {
 
   _mapStyle = "satellite";
 
+  // minLevel mirrors the backend's require_level gates:
+  // employee = 1, manager = 2, supervisor = 3.
   navConfig = [
-    { id: "overview", label: "Overview" },
-    { id: "evaluation", label: "Evaluation" },
-    { id: "evidence", label: "Evidence" },
-    { id: "incident", label: "Incident Watch" },
-    { id: "forensics", label: "Forensics" },
-    { id: "scenario", label: "Scenario lab" }
+    { id: "overview", label: "Overview", minLevel: 1 },
+    { id: "evaluation", label: "Evaluation", minLevel: 2 },
+    { id: "evidence", label: "Evidence", minLevel: 1 },
+    { id: "incident", label: "Incident Watch", minLevel: 1 },
+    { id: "forensics", label: "Forensics", minLevel: 3 },
+    { id: "scenario", label: "Scenario lab", minLevel: 1 }
   ];
+
+  authSession = window.ASTRA_AUTH || { username: "—", role: "employee", level: 1 };
 
   titleFor(id) {
     return { overview: "Operational overview", scenario: "Scenario laboratory", evidence: "Evidence matrix", incident: "Incident watch", forensics: "Forensic ledger", evaluation: "Scientific evaluation" }[id];
@@ -935,6 +942,7 @@ class Component extends DCLogic {
   }
 
   async analyzeTelemetry() {
+    if (this.authSession.level < 2) return;
     const content = document.getElementById("astraTelemetryInput")?.value?.trim() || this.state.importText.trim();
     if (!content) {
       this.setState({ importStatus: "Paste telemetry or choose a file first." });
@@ -980,7 +988,7 @@ class Component extends DCLogic {
   }
 
   acknowledgeIncident(key) {
-    if (!key) return;
+    if (!key || this.authSession.level < 2) return;
     const next = { ...this.state.incidentStatuses, [key]: "ACK" };
     try { window.localStorage.setItem("astraIncidentStatuses", JSON.stringify(next)); } catch (_) {}
     this.setState({ incidentStatuses: next });
@@ -1007,7 +1015,9 @@ class Component extends DCLogic {
       const key = (st.forensicEvent || {}).event_id || `epoch-${st.index}`;
       return (s.incidentStatuses[key] || "OPEN") === "OPEN";
     }).length;
-    const navItems = this.navConfig.map((item) => {
+    const auth = this.authSession;
+    const canAcknowledge = auth.level >= 2;
+    const navItems = this.navConfig.filter((item) => auth.level >= item.minLevel).map((item) => {
       const active = item.id === view;
       return {
         label: item.label, badge: item.id === "incident" && openIncidentCountForNav > 0 ? String(openIncidentCountForNav) : null,
@@ -1110,6 +1120,9 @@ class Component extends DCLogic {
       navItems, pageTitle: this.titleFor(view),
       connectionLabel: s.connectionLabel, connectionColor: s.connectionColor,
       sourceLabel: s.sourceLabel, utcLabel: s.utcLabel,
+      userUsername: auth.username, userLevel: auth.level,
+      userRoleLabel: auth.role.charAt(0).toUpperCase() + auth.role.slice(1),
+      canImportTelemetry: auth.level >= 2,
       isOverview: view === "overview", isScenario: view === "scenario", isEvidence: view === "evidence",
       isIncident: view === "incident", isForensics: view === "forensics", isEvaluation: view === "evaluation",
 
@@ -1150,8 +1163,8 @@ class Component extends DCLogic {
       selIncidentHash: selInc?.hash || "—", selIncidentAction: selInc?.action || "Continue monitoring",
       incidentOpenCount, incidentOpenCountColor: incidentOpenCount ? "var(--quarantined)" : "var(--fg-muted)", incidentAckCount, incidentAckCountColor: incidentAckCount ? "var(--degraded)" : "var(--fg-muted)", incidentCriticalCount, incidentCriticalCountColor: incidentCriticalCount ? "var(--quarantined)" : "var(--fg-muted)", incidentWarningCount, incidentWarningCountColor: incidentWarningCount ? "var(--degraded)" : "var(--fg-muted)",
       incidentFeedSummary: `${s.feedName || "Current feed"} · ${steps.length} epoch${steps.length === 1 ? "" : "s"} scanned`,
-      ackButtonLabel: !selInc ? "No incident" : selStatus === "ACK" ? "Acknowledged" : "Acknowledge",
-      ackButtonClass: `btn ${selStatus === "ACK" ? "btn--ghost" : "btn--primary"}`,
+      ackButtonLabel: !selInc ? "No incident" : selStatus === "ACK" ? "Acknowledged" : canAcknowledge ? "Acknowledge" : "Manager access required",
+      ackButtonClass: `btn ${selStatus === "ACK" || !canAcknowledge ? "btn--ghost" : "btn--primary"}`,
       onAcknowledge: () => this.acknowledgeIncident(selectedKey),
       onViewIncidentEvidence: () => this.viewIncidentEvidence(selInc?.stepIndex ?? 0),
 

@@ -27,7 +27,8 @@ from .forensics.memory import ForensicMemory
 from .simulation.scenarios import ScenarioGenerator
 from .evaluation.benchmark import BenchmarkEvaluator
 from .security import require_api_key, require_stream_id, settings
-from .auth import authenticate, create_token, get_current_user, AuthUser, ROLE_LEVELS
+from .auth import authenticate, register, create_token, get_current_user, require_level, AuthUser, ROLE_LEVELS, EMPLOYEE, MANAGER, SUPERVISOR
+from .supabase_store import SupabaseError, UserAlreadyExists
 from threading import RLock
 
 app = FastAPI(
@@ -96,17 +97,44 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RegisterRequest(LoginRequest):
+    role: str = "employee"
+
+
 @app.post("/api/auth/login")
 def login(payload: LoginRequest):
     """Issues a role-scoped session token for the three-tier access hierarchy
     (employee < manager < supervisor)."""
-    role = authenticate(payload.username, payload.password)
+    try:
+        role = authenticate(payload.username, payload.password)
+    except SupabaseError as exc:
+        raise HTTPException(status_code=503, detail="User database is unavailable. Try again shortly.") from exc
     if not role:
         raise HTTPException(status_code=401, detail="Invalid username or password")
-    token, expires_at = create_token(payload.username, role)
+    return _session_response(payload.username, role)
+
+
+@app.post("/api/auth/register")
+def register_user(payload: RegisterRequest):
+    """Creates an account at the chosen access level (saved to Supabase when
+    configured) and signs it in."""
+    username = payload.username.strip()
+    try:
+        role = register(username, payload.password, payload.role)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except UserAlreadyExists as exc:
+        raise HTTPException(status_code=409, detail="That username is already taken.") from exc
+    except SupabaseError as exc:
+        raise HTTPException(status_code=503, detail="User database is unavailable. Try again shortly.") from exc
+    return _session_response(username, role)
+
+
+def _session_response(username: str, role: str) -> dict:
+    token, expires_at = create_token(username, role)
     return {
         "token": token,
-        "username": payload.username,
+        "username": username,
         "role": role,
         "level": ROLE_LEVELS[role],
         "expires_at": expires_at,
@@ -285,7 +313,7 @@ def simulate_scenario(scenario_id: str, steps: int = 25):
 MAX_INGEST_CONTENT_BYTES = 2 * 1024 * 1024  # 2 MB
 
 
-@app.post("/api/ingest/text", dependencies=[Depends(require_api_key)])
+@app.post("/api/ingest/text", dependencies=[Depends(require_api_key), Depends(require_level(MANAGER))])
 def ingest_text_dataset(payload: Dict[str, str] = Body(...)):
     """
     Ingests raw CSV or NMEA text content, calculates SHA-256 hash, parses, validates, and runs pipeline.
@@ -379,7 +407,7 @@ def ingest_text_dataset(payload: Dict[str, str] = Body(...)):
     }
 
 
-@app.get("/api/forensics")
+@app.get("/api/forensics", dependencies=[Depends(require_level(SUPERVISOR))])
 def get_forensic_ledger():
     """Returns current in-memory cryptographic event chain and verification status."""
     is_valid, msg, bad_id, bad_seq = forensic_memory.verify_chain()
@@ -393,7 +421,7 @@ def get_forensic_ledger():
     }
 
 
-@app.post("/api/forensics/tamper-test", dependencies=[Depends(require_api_key)])
+@app.post("/api/forensics/tamper-test", dependencies=[Depends(require_api_key), Depends(require_level(SUPERVISOR))])
 def tamper_test():
     """
     Deliberately corrupts an event in memory to demonstrate cryptographic tamper detection.
@@ -404,7 +432,7 @@ def tamper_test():
     return res
 
 
-@app.post("/api/forensics/reset", dependencies=[Depends(require_api_key)])
+@app.post("/api/forensics/reset", dependencies=[Depends(require_api_key), Depends(require_level(SUPERVISOR))])
 def reset_forensics():
     if settings.is_production:
         raise HTTPException(status_code=404, detail="Not found")
@@ -412,7 +440,7 @@ def reset_forensics():
     return {"status": "RESET"}
 
 
-@app.get("/api/evaluation")
+@app.get("/api/evaluation", dependencies=[Depends(require_level(MANAGER))])
 def get_evaluation_benchmark():
     """Runs scientific evaluation and returns comparative metrics across models."""
     return BenchmarkEvaluator.run_full_benchmark()

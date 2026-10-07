@@ -10,6 +10,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import time
 from pathlib import Path
@@ -17,14 +18,19 @@ from typing import Optional
 
 from fastapi import Depends, Header, HTTPException, status
 
+from . import supabase_store
 from .security import settings
 
 ROLE_LEVELS = {"employee": 1, "manager": 2, "supervisor": 3}
+EMPLOYEE, MANAGER, SUPERVISOR = 1, 2, 3
 LEVEL_NAMES = {1: "employee", 2: "manager", 3: "supervisor"}
 TOKEN_TTL_SECONDS = 12 * 60 * 60  # 12 hours
 
 USERS_FILE = Path(__file__).resolve().parent / "data" / "users.json"
 PBKDF2_ITERATIONS = 200_000
+
+USERNAME_PATTERN = re.compile(r"[A-Za-z0-9._-]{3,32}")
+MIN_PASSWORD_LENGTH = 6
 
 # Falls back to a fixed development secret outside production, matching the
 # tolerance already established for ASTRA_LEDGER_SIGNING_KEY in security.py.
@@ -76,16 +82,40 @@ def _load_users() -> dict:
 
 
 def authenticate(username: str, password: str) -> Optional[str]:
-    """Demo mode: any non-empty username is accepted, with any (or no)
-    password. A recognized seed account (employee1/manager1/supervisor1)
-    still gets checked against its real password so role gating stays
-    testable; anything else falls through to the default demo role."""
+    """With Supabase configured, only registered users with the correct
+    password get in. Without it, the local demo mode stays: any non-empty
+    username is accepted, and a seed account (employee1/manager1/supervisor1)
+    is still checked against its real password so role gating stays testable."""
     if not username:
         return None
+    if supabase_store.is_configured():
+        return supabase_store.sign_in(username, password)
     record = _load_users().get(username)
     if record and _verify_password(password, record["password_hash"]):
         return record["role"]
     return "supervisor"
+
+
+def register(username: str, password: str, role: str) -> str:
+    """Creates a new account at the chosen access level and returns that role.
+    The role is stored in Supabase app_metadata, which only the service-role
+    key can change. Raises ValueError for invalid input and UserAlreadyExists
+    for a taken name."""
+    if role not in ROLE_LEVELS:
+        raise ValueError("Choose an access level: employee, manager or supervisor.")
+    if not USERNAME_PATTERN.fullmatch(username or ""):
+        raise ValueError("Username must be 3-32 characters: letters, numbers, dot, dash or underscore.")
+    if len(password or "") < MIN_PASSWORD_LENGTH:
+        raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+    if supabase_store.is_configured():
+        supabase_store.create_user(username, password, role)
+        return role
+    users = _load_users()
+    if username in users:
+        raise supabase_store.UserAlreadyExists()
+    users[username] = {"password_hash": _make_password_record(password), "role": role}
+    USERS_FILE.write_text(json.dumps(users, indent=2), encoding="utf-8")
+    return role
 
 
 def _b64encode(data: bytes) -> str:
