@@ -4,13 +4,17 @@ Exposes REST endpoints for telemetry ingestion, validation, physical-layer analy
 simulation playback, forensic ledger auditing, and scientific evaluation benchmarks.
 """
 
+from dotenv import load_dotenv
+from pathlib import Path
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
 from fastapi import FastAPI, HTTPException, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing import Dict, Any
 from pydantic import BaseModel
-from pathlib import Path
 
 from .core.schema import GNSSObservation, TrustResult, WhyTrustChanged, ForensicEvent
 from .gateway.sanitizer import InputGateway
@@ -23,7 +27,7 @@ from .forensics.memory import ForensicMemory
 from .simulation.scenarios import ScenarioGenerator
 from .evaluation.benchmark import BenchmarkEvaluator
 from .security import require_api_key, require_stream_id, settings
-from .auth import authenticate, create_token, get_current_user, require_level, AuthUser, ROLE_LEVELS
+from .auth import authenticate, create_token, get_current_user, AuthUser, ROLE_LEVELS
 from threading import RLock
 
 app = FastAPI(
@@ -135,7 +139,7 @@ def health_check():
     }
 
 
-@app.post("/api/validate", dependencies=[Depends(require_api_key), Depends(require_level(2))])
+@app.post("/api/validate", dependencies=[Depends(require_api_key)])
 def validate_single(payload: Dict[str, Any], stream_id: str = Depends(require_stream_id)):
     """Validates raw dictionary via secure input gateway."""
     pipeline = get_stream_pipeline(stream_id)
@@ -154,7 +158,7 @@ def validate_single(payload: Dict[str, Any], stream_id: str = Depends(require_st
     }
 
 
-@app.post("/api/analyze", dependencies=[Depends(require_api_key), Depends(require_level(2))])
+@app.post("/api/analyze", dependencies=[Depends(require_api_key)])
 def analyze_single(payload: Dict[str, Any] = Body(...), stream_id: str = Depends(require_stream_id)):
     """
     Executes full multi-layer ASTRA pipeline on a normalized GNSS observation:
@@ -210,13 +214,13 @@ def analyze_single(payload: Dict[str, Any] = Body(...), stream_id: str = Depends
     }
 
 
-@app.get("/api/scenarios", dependencies=[Depends(require_level(1))])
+@app.get("/api/scenarios")
 def list_scenarios():
     """Returns available simulation scenarios with metadata."""
     return ScenarioGenerator.get_all_scenarios_meta()
 
 
-@app.post("/api/simulate/{scenario_id}", dependencies=[Depends(require_level(1))])
+@app.post("/api/simulate/{scenario_id}")
 def simulate_scenario(scenario_id: str, steps: int = 25):
     """
     Executes a deterministic simulated threat scenario.
@@ -281,7 +285,7 @@ def simulate_scenario(scenario_id: str, steps: int = 25):
 MAX_INGEST_CONTENT_BYTES = 2 * 1024 * 1024  # 2 MB
 
 
-@app.post("/api/ingest/text", dependencies=[Depends(require_api_key), Depends(require_level(2))])
+@app.post("/api/ingest/text", dependencies=[Depends(require_api_key)])
 def ingest_text_dataset(payload: Dict[str, str] = Body(...)):
     """
     Ingests raw CSV or NMEA text content, calculates SHA-256 hash, parses, validates, and runs pipeline.
@@ -375,7 +379,7 @@ def ingest_text_dataset(payload: Dict[str, str] = Body(...)):
     }
 
 
-@app.get("/api/forensics", dependencies=[Depends(require_level(1))])
+@app.get("/api/forensics")
 def get_forensic_ledger():
     """Returns current in-memory cryptographic event chain and verification status."""
     is_valid, msg, bad_id, bad_seq = forensic_memory.verify_chain()
@@ -389,7 +393,7 @@ def get_forensic_ledger():
     }
 
 
-@app.post("/api/forensics/tamper-test", dependencies=[Depends(require_api_key), Depends(require_level(3))])
+@app.post("/api/forensics/tamper-test", dependencies=[Depends(require_api_key)])
 def tamper_test():
     """
     Deliberately corrupts an event in memory to demonstrate cryptographic tamper detection.
@@ -400,7 +404,7 @@ def tamper_test():
     return res
 
 
-@app.post("/api/forensics/reset", dependencies=[Depends(require_api_key), Depends(require_level(3))])
+@app.post("/api/forensics/reset", dependencies=[Depends(require_api_key)])
 def reset_forensics():
     if settings.is_production:
         raise HTTPException(status_code=404, detail="Not found")
@@ -408,7 +412,7 @@ def reset_forensics():
     return {"status": "RESET"}
 
 
-@app.get("/api/evaluation", dependencies=[Depends(require_level(1))])
+@app.get("/api/evaluation")
 def get_evaluation_benchmark():
     """Runs scientific evaluation and returns comparative metrics across models."""
     return BenchmarkEvaluator.run_full_benchmark()
@@ -425,6 +429,12 @@ FRONTEND_FILES = frozenset({
     "contact.html",
     "styles.css",
     "landing-redesign.css",
+    "landing-refined.css",
+    "landing-instrument.css",
+    "mission-control.css",
+    "landing-motion.css",
+    "landing-motion.js",
+    "refined-theme.css",
     "tokens.css",
     "script.js",
     "support.js",

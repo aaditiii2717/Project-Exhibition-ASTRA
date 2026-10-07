@@ -119,10 +119,39 @@
     instance.__render = () => {
       if (rendering) return;
       rendering = true;
+      const active = document.activeElement;
+      const isFocusedFormEl = active && root.contains(active) &&
+        (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
+      const selStart = isFocusedFormEl && "selectionStart" in active ? active.selectionStart : null;
+      const selEnd = isFocusedFormEl && "selectionStart" in active ? active.selectionEnd : null;
+
+      // replaceChildren below swaps in freshly-created DOM nodes, which resets
+      // scrollTop on any scrollable container (e.g. main, the incident feed,
+      // the ledger). Snapshot scroll offsets by position among matches so an
+      // ambient re-render (playback tick, clock, etc.) doesn't yank the view.
+      const scrollTargets = [...root.querySelectorAll("[data-dc-preserve-scroll]")];
+      const scrollOffsets = scrollTargets.map((el) => el.scrollTop);
+
       const scope = instance.renderVals();
       const fragment = document.createDocumentFragment();
       template.content.childNodes.forEach((node) => fragment.appendChild(renderNode(node, scope, stableNodes)));
       root.replaceChildren(fragment);
+
+      // Stable nodes (data-dc-stable) are the same DOM object across renders, but
+      // moving them through a detached DocumentFragment blurs them - restore focus
+      // (and cursor position) so typing isn't interrupted by ambient re-renders
+      // like the 1s clock tick.
+      if (isFocusedFormEl && document.body.contains(active)) {
+        active.focus();
+        if (selStart != null && typeof active.setSelectionRange === "function") {
+          try { active.setSelectionRange(selStart, selEnd); } catch (_) { /* not applicable to this input type */ }
+        }
+      }
+
+      root.querySelectorAll("[data-dc-preserve-scroll]").forEach((el, index) => {
+        if (scrollOffsets[index]) el.scrollTop = scrollOffsets[index];
+      });
+
       rendering = false;
     };
 

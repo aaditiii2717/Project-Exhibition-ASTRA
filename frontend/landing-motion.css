@@ -1,0 +1,57 @@
+/* Scroll motion for the sections after the orbit sequence.
+   The frame renderer owns everything above; this layer only animates the
+   product sections, using the same expo-out curve Apple-style pages favour. */
+
+:root{--motion-ease:cubic-bezier(.16,1,.3,1)}
+
+/* Headline lines clip upward, one after another. */
+.line-reveal{display:block;overflow:hidden}
+.line-reveal>span{display:block;transform:translateY(110%);opacity:0;
+  transition:transform 1.05s var(--motion-ease),opacity .8s var(--motion-ease);
+  transition-delay:calc(var(--i,0) * 90ms)}
+.is-revealed .line-reveal>span,.line-reveal.is-revealed>span{transform:translateY(0);opacity:1}
+
+/* Children of a staggered container enter in sequence rather than as one lump. */
+[data-stagger]>*{opacity:0;transform:translateY(26px);
+  transition:opacity .75s var(--motion-ease),transform .9s var(--motion-ease);
+  transition-delay:calc(var(--i,0) * 70ms)}
+[data-stagger].is-revealed>*{opacity:1;transform:none}
+
+/* Table and list rows travel a shorter distance, faster. */
+[data-stagger="rows"]>*{transform:translateY(14px);
+  transition-delay:calc(var(--i,0) * 45ms)}
+
+/* Section copy leads its own section by a beat. */
+.reveal .category-label{opacity:0;transform:translateY(12px);
+  transition:opacity .6s var(--motion-ease),transform .7s var(--motion-ease)}
+.reveal.is-revealed .category-label{opacity:1;transform:none}
+.reveal>p:not(.category-label),.reveal .statement__aside,.reveal .spec-list{
+  opacity:0;transform:translateY(20px);
+  transition:opacity .8s var(--motion-ease) .12s,transform .9s var(--motion-ease) .12s}
+.reveal.is-revealed>p:not(.category-label),
+.reveal.is-revealed .statement__aside,
+.reveal.is-revealed .spec-list{opacity:1;transform:none}
+
+/* Large media drifts against the scroll. */
+[data-parallax]{will-change:transform}
+[data-parallax] img{transform:translate3d(0,var(--py,0),0) scale(1.06);transition:none}
+
+/* Panels settle rather than slide. */
+.panel-rise{opacity:0;transform:translateY(30px) scale(.985);
+  transition:opacity .85s var(--motion-ease),transform 1s var(--motion-ease)}
+.panel-rise.is-revealed{opacity:1;transform:none}
+
+/* Boot loader: a real progress readout while frames buffer. */
+.boot__mark{animation:bootSpin 2.4s linear infinite}
+@keyframes bootSpin{to{transform:rotate(360deg)}}
+.boot__copy strong{font-variant-numeric:tabular-nums}
+.boot.is-ready{opacity:0;visibility:hidden;transition:opacity .8s var(--motion-ease),visibility .8s}
+
+@media (prefers-reduced-motion:reduce){
+  .line-reveal>span,[data-stagger]>*,.panel-rise,
+  .reveal .category-label,.reveal>p:not(.category-label),
+  .reveal .statement__aside,.reveal .spec-list{
+    opacity:1!important;transform:none!important;transition:none!important}
+  [data-parallax] img{transform:none}
+  .boot__mark{animation:none}
+}

@@ -6,10 +6,7 @@
 <meta name="theme-color" content="#03070a" />
 <title>ASTRA — Mission Control sign in</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tokens.css" />
+<link rel="stylesheet" href="styles.css" />
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
@@ -87,8 +84,31 @@
     color: var(--platinum);
     font: 12px/1 var(--mono);
     letter-spacing: .1em;
-    margin: 0 0 30px;
+    margin: 0 0 24px;
   }
+
+  .mode-toggle {
+    display: flex;
+    width: 100%;
+    padding: 3px;
+    margin-bottom: 22px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .mode-toggle__btn {
+    flex: 1;
+    height: 34px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--silver);
+    font: 13px/1 var(--text);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s var(--ease), color .15s var(--ease);
+  }
+  .mode-toggle__btn.is-active { background: var(--frost); color: #04070a; }
 
   form { width: 100%; }
   .field-wrap { position: relative; margin-bottom: 14px; }
@@ -116,8 +136,11 @@
     transition: box-shadow .15s var(--ease), transform .1s var(--ease);
   }
   input::placeholder { color: #7b8791; }
-  input[type="text"]:focus, input[type="password"]:focus {
-    box-shadow: 0 0 0 3px rgba(87,149,245,.45);
+  input[type="text"]:focus, input[type="password"]:focus,
+  input[type="text"]:invalid, input[type="password"]:invalid,
+  input[type="text"]:focus:invalid, input[type="password"]:focus:invalid {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(15,23,42,.55);
   }
 
   .submit {
@@ -126,17 +149,17 @@
     margin-top: 10px;
     border: none;
     border-radius: 999px;
-    background: linear-gradient(180deg, #6ba2f7, #2f5fc9);
-    color: #fff;
+    background: var(--frost);
+    color: #04070a;
     font: 15px/1 var(--text);
     font-weight: 700;
     letter-spacing: .02em;
     cursor: pointer;
-    box-shadow: 0 10px 24px rgba(47,95,201,.4);
-    transition: filter .15s var(--ease), transform .1s var(--ease);
+    box-shadow: 0 10px 24px rgba(0,0,0,.4);
+    transition: background .15s var(--ease), transform .1s var(--ease);
   }
   .submit:disabled { opacity: .65; cursor: progress; }
-  .submit:not(:disabled):hover { filter: brightness(1.08); }
+  .submit:not(:disabled):hover { background: #fff; }
   .submit:not(:disabled):active { transform: translateY(1px); }
 
   .error {
@@ -177,17 +200,21 @@
 
   <main class="card">
     <div class="badge"><img src="assets/brand/astra-logo-navigation.png" alt="ASTRA" /></div>
-    <h1>ASTRA MISSION CONTROL</h1>
+    <h1>MISSION CONTROL</h1>
     <p class="sub">Navigation Trust &amp; Integrity Layer</p>
 
+    <div class="mode-toggle" role="tablist" aria-label="Sign in or register">
+      <button type="button" class="mode-toggle__btn" id="tabSignIn" role="tab">Sign in</button>
+      <button type="button" class="mode-toggle__btn" id="tabRegister" role="tab">Register</button>
+    </div>
     <form id="loginForm" autocomplete="on">
       <div class="field-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" stroke-linecap="round"/><circle cx="12" cy="7" r="4"/></svg>
-        <input type="text" id="username" name="username" autocomplete="username" placeholder="Username" required />
+        <input type="text" id="username" name="username" autocomplete="username" placeholder="Username (optional)" />
       </div>
       <div class="field-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>
-        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Password" required />
+        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Password (optional)" />
       </div>
       <button type="submit" class="submit" id="submitBtn">Log in</button>
       <div class="error" id="loginError"></div>
@@ -203,57 +230,60 @@
   "use strict";
   const STORAGE_KEY = "astraAuth";
 
-  // Already signed in with a valid session — skip straight to Mission Control.
-  try {
-    const existing = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "null");
-    if (existing?.token && existing?.expires_at * 1000 > Date.now()) {
-      window.location.replace("main.html");
-      return;
-    }
-  } catch (_) {}
-
   const form = document.getElementById("loginForm");
   const errorBox = document.getElementById("loginError");
   const submitBtn = document.getElementById("submitBtn");
-  const usernameInput = document.getElementById("username");
-  const passwordInput = document.getElementById("password");
+  const subtitle = document.querySelector("p.sub");
+  const tabSignIn = document.getElementById("tabSignIn");
+  const tabRegister = document.getElementById("tabRegister");
 
-  // Auto-fill and auto-submit to bypass login for now
-  usernameInput.value = "supervisor1";
-  passwordInput.value = "Supervisor@123";
+  // Sign in / Register are the same demo-mode endpoint underneath — any
+  // username works either way — this toggle only changes the copy so the
+  // landing page's two entry points feel distinct.
+  let isRegisterMode = false;
+  function setMode(mode) {
+    isRegisterMode = mode === "register";
+    tabSignIn.classList.toggle("is-active", !isRegisterMode);
+    tabRegister.classList.toggle("is-active", isRegisterMode);
+    tabSignIn.setAttribute("aria-selected", String(!isRegisterMode));
+    tabRegister.setAttribute("aria-selected", String(isRegisterMode));
+    subtitle.textContent = isRegisterMode ? "Create your operator access" : "Navigation Trust & Integrity Layer";
+    submitBtn.textContent = isRegisterMode ? "Register" : "Log in";
+    const url = new URL(window.location.href);
+    if (isRegisterMode) url.searchParams.set("mode", "register"); else url.searchParams.delete("mode");
+    window.history.replaceState(null, "", url);
+  }
 
-  setTimeout(() => {
-    submitBtn.click();
-  }, 100);
+  tabSignIn.addEventListener("click", () => setMode("signin"));
+  tabRegister.addEventListener("click", () => setMode("register"));
+  setMode(new URLSearchParams(window.location.search).get("mode") === "register" ? "register" : "signin");
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     errorBox.classList.remove("is-visible");
     submitBtn.disabled = true;
-    submitBtn.textContent = "Authenticating...";
+    submitBtn.textContent = isRegisterMode ? "Registering…" : "Signing in…";
+
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
 
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: usernameInput.value,
-          password: passwordInput.value,
-        }),
+        body: JSON.stringify({ username, password })
       });
-
+      const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error("Invalid credentials");
+        throw new Error(payload?.detail || "Invalid username or password.");
       }
-
-      const data = await response.json();
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       window.location.replace("main.html");
-    } catch (err) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Log in";
-      errorBox.textContent = "Access denied. Invalid credentials.";
+    } catch (error) {
+      errorBox.textContent = error.message || "Sign in failed. Please try again.";
       errorBox.classList.add("is-visible");
+      submitBtn.disabled = false;
+      submitBtn.textContent = isRegisterMode ? "Register" : "Log in";
     }
   });
 })();

@@ -7,15 +7,16 @@ ML does NOT override physical laws; it serves as one more vote in evidence fusio
 
 import numpy as np
 import os
-from typing import Dict, List, Optional, Tuple
-
 try:
     import joblib
-    from sklearn.ensemble import IsolationForest, RandomForestClassifier
-    HAS_SKLEARN = True
 except ImportError:
-    HAS_SKLEARN = False
-
+    joblib = None
+from typing import Dict, List, Optional, Tuple
+try:
+    from sklearn.ensemble import IsolationForest, RandomForestClassifier
+except ImportError:
+    IsolationForest = None
+    RandomForestClassifier = None
 from ..core.schema import GNSSObservation, EvidenceItem, CheckStatus
 
 
@@ -45,33 +46,43 @@ class MLEngine:
 
     _SHARED_ISO_FOREST = None
     _SHARED_RF_CLASSIFIER = None
+    _shared_load_attempted = False
 
     def __init__(self):
         self.prev_obs: Optional[GNSSObservation] = None
         self.prev_time: Optional[float] = None
         self.baseline_lat_lon: Optional[Tuple[float, float]] = None
 
-        self.iso_forest = None
-        self.rf_classifier = None
         self.is_trained = self._load_approved_model()
+        self.iso_forest = self._SHARED_ISO_FOREST
+        self.rf_classifier = self._SHARED_RF_CLASSIFIER
 
-    def _load_approved_model(self) -> bool:
-        """Load only a versioned artifact produced by the approved training workflow."""
-        if not HAS_SKLEARN:
-            return False
+    @classmethod
+    def _load_approved_model(cls) -> bool:
+        """
+        Load only a versioned artifact produced by the approved training workflow.
+        Cached at the class level: joblib.load() deserializes the whole artifact
+        from disk, so every MLEngine() instance reusing the same cached model
+        instead of reloading it avoids redundant disk I/O and unpickling under
+        high construction rates (e.g. the benchmark evaluator).
+        """
+        if cls._shared_load_attempted:
+            return cls._SHARED_RF_CLASSIFIER is not None
+        cls._shared_load_attempted = True
+
         model_path = os.getenv("ASTRA_MODEL_PATH")
-        if not model_path:
+        if not model_path or joblib is None:
             return False
         try:
             artifact = joblib.load(model_path)
-            if artifact.get("feature_names") != self.FEATURE_NAMES:
+            if artifact.get("feature_names") != cls.FEATURE_NAMES:
                 return False
             if artifact.get("artifact_version") != 1:
                 return False
-            self.iso_forest = artifact["isolation_forest"]
-            self.rf_classifier = artifact["random_forest"]
+            cls._SHARED_ISO_FOREST = artifact["isolation_forest"]
+            cls._SHARED_RF_CLASSIFIER = artifact["random_forest"]
             return True
-        except (OSError, KeyError, ValueError, TypeError, AttributeError):
+        except Exception:
             return False
 
     def reset(self):

@@ -1,0 +1,8 @@
+@font-face{font-family:"Geist";src:url("assets/fonts/geist-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Geist";src:url("assets/fonts/geist-500.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:"Geist";src:url("assets/fonts/geist-600.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+:root{color-scheme:dark;--stage:#06090d;--black:#06090d;--recessed:#0a1017;--surface:#0e151e;--surface-soft:#17212d;--panel:#0e151e;--line:#283544;--line-strong:#36475a;--text-primary:#e8edf3;--text-secondary:#a0adbc;--text-muted:#a0adbc;--accent:#E2E8F0;--accent-soft:#FFFFFF;--warning:#e4b66b;--danger:#ed8791;--trusted:#70c7ae;--frost:#e8edf3;--silver:#a0adbc;--muted:#a0adbc;--blue:#E2E8F0;--halo:#FFFFFF;--display:"Geist",ui-sans-serif,system-ui,sans-serif;--text:"Geist",ui-sans-serif,system-ui,sans-serif;--gradient-bio:#E2E8F0;--gradient-bio-text:#020617}
+body{font-family:var(--text);background:var(--stage);color:var(--text-primary)}
+button,input,textarea,select{font:inherit}
+:is(a,button,input,textarea,select):focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+::selection{background:#8ab8f8;color:#06090d}

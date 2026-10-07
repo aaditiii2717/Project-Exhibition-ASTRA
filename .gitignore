@@ -1,24 +1,41 @@
-# Local environments and dependencies
+# ── Python environment ────────────────────────────────────────────────────────
 .venv/
-frontend/node_modules/
-.tools/
-_cleanup_archive_*/
+**/__pycache__/
+*.py[cod]
+*.pyo
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ── Environment & secrets ─────────────────────────────────────────────────────
 .env
 .env.*
 !.env.example
 
-# Runtime and generated files
-**/__pycache__/
-*.py[cod]
+# ── Runtime / generated ───────────────────────────────────────────────────────
 *.log
-.pytest_cache/
-.coverage
-htmlcov/
 backend/data/forensic_ledger.jsonl
 
-# OS and editor files
+# ── Sensitive data (never commit) ─────────────────────────────────────────────
+# users.json contains password hashes — use users.json.example as the template
+backend/app/data/users.json
+
+# ── ML model artifacts ────────────────────────────────────────────────────────
+# Large binary files — train locally with train_model.py or obtain via release
+backend/models/*.joblib
+
+# ── Frontend build & dependencies ─────────────────────────────────────────────
+frontend/node_modules/
+frontend/package-lock.json
+
+# ── Shader/source reference scratch files ────────────────────────────────────
+frontend/src/shaders/neuform-isolated/sources/
+
+# ── OS & editor ───────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
 .claude/
+_cleanup_archive_*/
+.tools/

@@ -1,0 +1,10 @@
+{
+  "operator1": {
+    "password_hash": "REPLACE_WITH_SCRYPT_OR_ARGON2_HASH",
+    "role": "employee"
+  },
+  "manager1": {
+    "password_hash": "REPLACE_WITH_SCRYPT_OR_ARGON2_HASH",
+    "role": "manager"
+  }
+}
