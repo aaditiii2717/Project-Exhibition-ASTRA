@@ -45,7 +45,11 @@ def _email_for(username: str) -> str:
 
 def _request(path: str, body: dict) -> tuple[int, dict]:
     url, key = _config()
-    headers = {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    headers = {"apikey": key, "Content-Type": "application/json"}
+    # Legacy service_role keys are JWTs and also go in Authorization; the newer
+    # sb_secret_... keys must only be sent as `apikey`.
+    if key.startswith("eyJ"):
+        headers["Authorization"] = f"Bearer {key}"
     req = urllib.request.Request(f"{url}/auth/v1/{path}", data=json.dumps(body).encode("utf-8"), headers=headers, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT_SECONDS) as resp:
